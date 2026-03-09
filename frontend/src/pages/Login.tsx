@@ -35,10 +35,7 @@ export default function Login() {
   return (
     <>
       <PixelBackground />
-      <div
-        className="min-h-screen flex items-center justify-center relative z-10"
-        style={{ background: "linear-gradient(to bottom, #FFF5FB, #EEF0FF)" }}
-      >
+      <div className="min-h-screen flex items-center justify-center relative z-10">
       <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-pink-100 p-8 w-full max-w-sm">
         <h2 className="text-2xl font-bold text-gray-900 mb-1">ยินดีต้อนรับ 👋</h2>
         <p className="text-sm text-gray-500 mb-6">เข้าสู่ระบบเพื่อจัดการรายรับ-รายจ่าย</p>
