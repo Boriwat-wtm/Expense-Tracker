@@ -11,22 +11,22 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
-import type { DashboardMonthly, DashboardSummary } from "@/types";
+import type { CategoryBreakdown, DashboardMonthly, DashboardSummary } from "@/types";
 import { formatCurrency, shortMonth } from "@/lib/utils";
 
-const PIE_COLORS = ["#22c55e", "#ef4444"];
+const CATEGORY_COLORS = [
+  "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6",
+  "#ec4899", "#14b8a6", "#f97316", "#06b6d4", "#84cc16",
+  "#a78bfa", "#fb923c",
+];
 
 interface Props {
   summary: DashboardSummary;
   monthly: DashboardMonthly;
+  categoryBreakdown: CategoryBreakdown[];
 }
 
-export default function DashboardCharts({ summary, monthly }: Props) {
-  const pieData = [
-    { name: "รายรับ", value: summary.total_income },
-    { name: "รายจ่าย", value: summary.total_expense },
-  ];
-
+export default function DashboardCharts({ monthly, categoryBreakdown }: Props) {
   const barData = monthly.data.map((d) => ({
     name: shortMonth(d.month),
     รายรับ: d.income,
@@ -35,31 +35,40 @@ export default function DashboardCharts({ summary, monthly }: Props) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Pie Chart */}
+      {/* Category Doughnut Chart */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-800 mb-4">รายรับ vs รายจ่าย</h3>
-        <ResponsiveContainer width="100%" height={260}>
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              innerRadius={70}
-              outerRadius={110}
-              paddingAngle={3}
-              dataKey="value"
-              label={({ name, percent }) =>
-                `${name} ${(percent * 100).toFixed(0)}%`
-              }
-            >
-              {pieData.map((_, i) => (
-                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(val: number) => formatCurrency(val)} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+        <h3 className="font-semibold text-gray-800 mb-4">สัดส่วนรายจ่ายตามหมวดหมู่</h3>
+        {categoryBreakdown.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[260px] text-gray-400 gap-1">
+            <p className="text-sm">ยังไม่มีข้อมูลหมวดหมู่</p>
+            <p className="text-xs">แก้ไขรายการและเพิ่ม Category เพื่อดูกราฟนี้</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart>
+              <Pie
+                data={categoryBreakdown}
+                cx="50%"
+                cy="50%"
+                innerRadius={65}
+                outerRadius={105}
+                paddingAngle={3}
+                dataKey="total"
+                nameKey="category"
+                label={({ name, percent }) =>
+                  percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
+                }
+                labelLine={false}
+              >
+                {categoryBreakdown.map((_, i) => (
+                  <Cell key={i} fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(val: number) => formatCurrency(val)} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* Bar Chart */}

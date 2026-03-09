@@ -12,6 +12,7 @@ class TransactionCreate(BaseModel):
     date: date
     amount: Decimal
     description: Optional[str] = None
+    category: Optional[str] = None
     type: TransactionType
     source: TransactionSource = TransactionSource.manual
 
@@ -20,6 +21,7 @@ class TransactionUpdate(BaseModel):
     date: Optional[date] = None
     amount: Optional[Decimal] = None
     description: Optional[str] = None
+    category: Optional[str] = None
     type: Optional[TransactionType] = None
 
 
@@ -29,6 +31,7 @@ class TransactionOut(BaseModel):
     date: date
     amount: Decimal
     description: Optional[str]
+    category: Optional[str]
     type: TransactionType
     source: TransactionSource
     created_at: datetime

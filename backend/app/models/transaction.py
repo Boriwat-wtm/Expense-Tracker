@@ -34,6 +34,7 @@ class Transaction(Base):
     date: Mapped[dt_date] = mapped_column(nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     type: Mapped[TransactionType] = mapped_column(SAEnum(TransactionType), nullable=False)
     source: Mapped[TransactionSource] = mapped_column(
         SAEnum(TransactionSource), nullable=False, default=TransactionSource.manual

@@ -34,6 +34,7 @@ export interface Transaction {
   date: string;        // ISO date string  "YYYY-MM-DD"
   amount: string;      // Decimal as string to avoid float precision issues
   description: string | null;
+  category: string | null;
   type: TransactionType;
   source: TransactionSource;
   created_at: string;
@@ -43,6 +44,7 @@ export interface TransactionCreate {
   date: string;
   amount: string;
   description?: string;
+  category?: string;
   type: TransactionType;
   source: TransactionSource;
 }
@@ -51,6 +53,7 @@ export interface TransactionUpdate {
   date?: string;
   amount?: string;
   description?: string;
+  category?: string;
   type?: TransactionType;
 }
 
@@ -77,6 +80,20 @@ export interface DashboardMonthly {
 }
 
 // ── Upload ────────────────────────────────────────────────────────────────────
+export interface RecentTransaction {
+  id: string;
+  date: string;
+  description: string | null;
+  amount: number;
+  type: TransactionType;
+  category: string | null;
+}
+
+export interface CategoryBreakdown {
+  category: string;
+  total: number;
+}
+
 export interface PreviewItem {
   filename?: string;
   date: string | null;
