@@ -5,8 +5,11 @@ from .config import get_settings
 
 settings = get_settings()
 
+# SQLAlchemy 2.0 requires "postgresql://" — Aiven gives "postgres://"
+_db_url = settings.database_url.replace("postgres://", "postgresql://", 1)
+
 engine = create_engine(
-    settings.database_url,
+    _db_url,
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
