@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import extract, func
@@ -50,7 +51,7 @@ def get_summary(
 
 @router.get("/monthly")
 def get_monthly(
-    year: int = None,
+    year: Optional[int] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

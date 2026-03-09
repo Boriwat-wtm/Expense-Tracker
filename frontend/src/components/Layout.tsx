@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Upload, History, LogOut } from "lucide-react";
+import { LayoutDashboard, Upload, History, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { logout, getUser } = useAuth();
   const { pathname } = useLocation();
   const user = getUser();
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="min-h-screen flex">
@@ -22,7 +23,14 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="p-5 border-b border-gray-100">
           <h1 className="text-lg font-bold text-brand-600">💰 Expense Tracker</h1>
           {user && (
-            <p className="text-xs text-gray-500 mt-0.5 truncate">@{user.username}</p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <p className="text-xs text-gray-500 truncate">@{user.username}</p>
+              {isAdmin && (
+                <span className="text-[10px] bg-brand-100 text-brand-700 font-semibold px-1.5 py-0.5 rounded">
+                  Admin
+                </span>
+              )}
+            </div>
           )}
         </div>
         <nav className="flex-1 p-3 space-y-1">
@@ -41,6 +49,20 @@ export default function Layout({ children }: { children: ReactNode }) {
               {label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                pathname === "/admin"
+                  ? "bg-brand-50 text-brand-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <ShieldCheck size={18} />
+              Admin Panel
+            </Link>
+          )}
         </nav>
         <div className="p-3 border-t border-gray-100">
           <button

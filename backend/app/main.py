@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import auth, transactions, dashboard, upload
+from .routers import admin, auth, transactions, dashboard, upload
 
 settings = get_settings()
 
@@ -20,6 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(admin)
 app.include_router(auth)
 app.include_router(transactions)
 app.include_router(dashboard)

@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
+from ..models.user import UserRole
+
 
 class UserRegister(BaseModel):
     username: str
@@ -20,6 +22,7 @@ class UserOut(BaseModel):
     id: UUID
     username: str
     email: str
+    role: UserRole
     ocr_quota_used: int
     ocr_quota_reset_date: Optional[date]
 

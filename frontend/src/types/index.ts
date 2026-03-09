@@ -1,10 +1,21 @@
 // ── Auth ─────────────────────────────────────────────────────────────────────
+export type UserRole = "admin" | "user";
+
 export interface UserOut {
   id: string;
   username: string;
   email: string;
+  role: UserRole;
   ocr_quota_used: number;
   ocr_quota_reset_date: string | null;
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+export interface AdminQuota {
+  quota_limit: number;
+  quota_used: number;
+  quota_remaining: number;
+  reset_date: string | null;
 }
 
 export interface AuthToken {
