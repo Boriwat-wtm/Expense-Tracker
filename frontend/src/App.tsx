@@ -5,6 +5,7 @@ import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import Upload from "@/pages/Upload";
 import History from "@/pages/History";
+import Report from "@/pages/Report";
 import Admin from "@/pages/Admin";
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/history" element={<History />} />
+          <Route path="/report" element={<Report />} />
           <Route path="/admin" element={<Admin />} />
         </Route>
       </Routes>

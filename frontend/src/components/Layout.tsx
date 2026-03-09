@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Upload, History, LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Upload, History, LogOut, ShieldCheck, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ const NAV = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/upload", icon: Upload, label: "อัปโหลด" },
   { to: "/history", icon: History, label: "ประวัติ" },
+  { to: "/report", icon: FileSpreadsheet, label: "สรุปรายงาน" },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {

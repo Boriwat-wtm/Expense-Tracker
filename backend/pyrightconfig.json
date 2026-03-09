@@ -10,5 +10,7 @@
   "reportUnknownVariableType": "none",
   "reportUnknownMemberType": "none",
   "reportUnknownArgumentType": "none",
-  "reportMissingTypeArgument": "none"
+  "reportMissingTypeArgument": "none",
+  "reportMissingImports": "none",
+  "reportUnusedVariable": "none"
 }
