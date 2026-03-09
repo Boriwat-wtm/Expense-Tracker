@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FileSpreadsheet, Download, Calendar, Filter } from "lucide-react";
 import api from "@/lib/api";
 import type { Transaction, TransactionSource, TransactionType } from "@/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 
 const THAI_MONTHS = [
   "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -27,7 +27,12 @@ function generateMonthOptions(): Array<{ value: string; label: string }> {
 const MONTH_OPTIONS = generateMonthOptions();
 
 const TYPE_LABELS: Record<TransactionType, string> = { income: "รายรับ", expense: "รายจ่าย" };
-const SOURCE_LABELS: Record<TransactionSource, string> = { slip: "สลิป", pdf: "PDF", manual: "Manual" };
+const SOURCE_CONFIG: Record<TransactionSource, { label: string; bg: string; color: string }> = {
+  slip:   { label: "สลิป",          bg: "#EFF6FF", color: "#2563EB" },
+  pdf:    { label: "Statement",     bg: "#F0FDF4", color: "#16A34A" },
+  merged: { label: "ยืนยันแล้ว ✓",  bg: "#F5F3FF", color: "#7C3AED" },
+  manual: { label: "Manual",        bg: "var(--badge-bg)", color: "var(--badge-text)" },
+};
 
 export default function Report() {
   const now = new Date();
@@ -221,7 +226,12 @@ export default function Report() {
                 {transactions.map((txn, i) => (
                   <tr key={txn.id} className="transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
                     <td className="px-4 py-2.5 text-xs" style={{ color: "var(--text-muted)" }}>{i + 1}</td>
-                    <td className="px-4 py-2.5 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{formatDate(txn.date)}</td>
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <p style={{ color: "var(--text)" }}>{formatDate(txn.date)}</p>
+                      {txn.transaction_time && (
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{formatTime(txn.transaction_time)}</p>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 max-w-[220px] truncate" style={{ color: "var(--text)" }}>
                       {txn.description ?? "—"}
                     </td>
@@ -245,7 +255,16 @@ export default function Report() {
                         {TYPE_LABELS[txn.type]}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-xs" style={{ color: "var(--text-muted)" }}>{SOURCE_LABELS[txn.source]}</td>
+                    <td className="px-4 py-2.5">
+                      {(() => {
+                        const cfg = SOURCE_CONFIG[txn.source] ?? SOURCE_CONFIG.manual;
+                        return (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
+                            {cfg.label}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td
                       className="px-4 py-2.5 font-semibold whitespace-nowrap text-right"
                       style={{ color: txn.type === "income" ? "var(--income)" : "var(--expense)" }}

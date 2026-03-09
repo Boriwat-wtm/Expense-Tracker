@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Any, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -7,9 +8,9 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..dependencies import get_current_user
 from ..models.master_quota import get_or_create_master_quota
-from ..models.transaction import Transaction
+from ..models.transaction import Transaction, TransactionSource
 from ..models.user import User
-from ..schemas.transaction import BulkConfirm, TransactionOut
+from ..schemas.transaction import BulkConfirm, TransactionCreate, TransactionOut
 from ..services import ocr_service, pdf_service
 
 router = APIRouter(prefix="/upload", tags=["upload"])
@@ -18,6 +19,43 @@ _ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 _ALLOWED_PDF_TYPE = "application/pdf"
 _MAX_IMAGE_BYTES = 10 * 1024 * 1024   # 10 MB
 _MAX_PDF_BYTES = 50 * 1024 * 1024     # 50 MB
+
+
+def _find_duplicate(
+    db: Session, user_id: UUID, txn: TransactionCreate
+) -> Optional[Transaction]:
+    """
+    Look for an existing transaction that matches by date + amount + type.
+    If both records have a time, they must be within 60 seconds of each other.
+    """
+    candidates = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.date == txn.date,
+            Transaction.amount == txn.amount,
+            Transaction.type == txn.type,
+        )
+        .all()
+    )
+    if not candidates:
+        return None
+
+    if txn.transaction_time is None:
+        # No time on the incoming record — match on date+amount+type
+        return candidates[0]
+
+    for existing in candidates:
+        if existing.transaction_time is None:
+            # Existing has no time — accept as a match
+            return existing
+        # Both have a time: require ±1 minute
+        dt_new = datetime.combine(txn.date, txn.transaction_time)
+        dt_ex = datetime.combine(existing.date, existing.transaction_time)
+        if abs((dt_new - dt_ex).total_seconds()) <= 60:
+            return existing
+
+    return None
 
 
 def _reset_user_quota_if_new_month(user: User, db: Session) -> None:
@@ -82,6 +120,8 @@ async def upload_slips(
                 result["date"] = result["date"].isoformat()
             if result.get("amount"):
                 result["amount"] = str(result["amount"])
+            if result.get("transaction_time"):
+                result["transaction_time"] = result["transaction_time"].isoformat()
             results.append(result)
             # Deduct 1 from both the user counter and the master pool
             current_user.ocr_quota_used = int(current_user.ocr_quota_used) + 1  # type: ignore[assignment]
@@ -97,7 +137,6 @@ async def upload_slips(
         "user_quota_used": current_user.ocr_quota_used,
         "master_quota_remaining": master.quota_limit - master.quota_used,
     }
-
 
 @router.post("/pdf")
 async def upload_pdf(
@@ -128,6 +167,7 @@ async def upload_pdf(
             **row,
             "date": row["date"].isoformat() if row.get("date") else None,
             "amount": str(row["amount"]) if row.get("amount") else None,
+            "transaction_time": row["transaction_time"].isoformat() if row.get("transaction_time") else None,
         }
         for row in rows
     ]
@@ -140,12 +180,28 @@ def confirm_transactions(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    objects = [
-        Transaction(**txn.model_dump(), user_id=current_user.id)
-        for txn in data.transactions
-    ]
-    db.add_all(objects)
+    saved: list[Transaction] = []
+    for txn_data in data.transactions:
+        dup = _find_duplicate(db, current_user.id, txn_data)
+        if dup is not None:
+            # — Merge: enrich the existing record with data from the new source —
+            if txn_data.merchant_name and not dup.merchant_name:
+                dup.merchant_name = txn_data.merchant_name
+            if txn_data.transaction_time and not dup.transaction_time:
+                dup.transaction_time = txn_data.transaction_time
+            if txn_data.description and not dup.description:
+                dup.description = txn_data.description
+            if txn_data.category and not dup.category:
+                dup.category = txn_data.category
+            dup.source = TransactionSource.merged
+            db.flush()
+            saved.append(dup)
+        else:
+            new_txn = Transaction(**txn_data.model_dump(), user_id=current_user.id)
+            db.add(new_txn)
+            db.flush()
+            saved.append(new_txn)
     db.commit()
-    for obj in objects:
+    for obj in saved:
         db.refresh(obj)
-    return objects
+    return saved

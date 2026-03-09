@@ -1,6 +1,6 @@
 import base64
 import re
-from datetime import date
+from datetime import date, time as dt_time
 from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
 
@@ -11,7 +11,7 @@ from ..config import get_settings
 settings = get_settings()
 
 VISION_URL = "https://vision.googleapis.com/v1/images:annotate"
-# ── Date / Amount regex patterns ─────────────────────────────────────────────────────
+# ── Date / Amount / Time regex patterns ─────────────────────────────────────────────────────
 _DATE_PATTERNS = [
     # DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
     re.compile(r"(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2,4})"),
@@ -28,10 +28,22 @@ _THAI_MONTHS: dict[str, int] = {
     "กันยายน": 9, "ตุลาคม": 10, "พฤศจิกายน": 11, "ธันวาคม": 12,
 }
 
+_TIME_RE = re.compile(r"\b([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\b")
+
 _AMOUNT_RE = re.compile(
     r"(?:THB|฿|บาท)?\s*([0-9]{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:THB|฿|บาท)?",
     re.IGNORECASE,
 )
+
+
+def _parse_time(text: str) -> Optional[dt_time]:
+    m = _TIME_RE.search(text)
+    if not m:
+        return None
+    try:
+        return dt_time(int(m.group(1)), int(m.group(2)))
+    except ValueError:
+        return None
 
 
 def _parse_date(text: str) -> Optional[date]:
@@ -121,6 +133,7 @@ def extract_from_image(image_bytes: bytes) -> dict[str, Any]:
 
     return {
         "date": _parse_date(full_text),
+        "transaction_time": _parse_time(full_text),
         "amount": _parse_amount(full_text),
         "raw_text": full_text[:500],
         "source": "slip",

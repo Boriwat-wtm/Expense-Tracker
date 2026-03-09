@@ -134,7 +134,7 @@ def export_transactions(
     center = Alignment(horizontal="center", vertical="center")
 
     # ── Header row ───────────────────────────────────────────────────────────
-    headers = ["ลำดับ", "วันที่", "คำอธิบาย", "หมวดหมู่", "ประเภท", "Source", "ยอดเงิน (บาท)"]
+    headers = ["ลำดับ", "วันที่", "เวลา", "บันทึกช่วยจำ (Memo)", "ชื่อร้าน/ผู้รับ", "หมวดหมู่", "ประเภท", "Source", "ยอดเงิน (บาท)"]
     for col, h in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=h)
         cell.font = header_font
@@ -180,19 +180,19 @@ def export_transactions(
     for offset, (label, val, color) in enumerate(summary_data):
         r = last_data + 1 + offset
         merged = ws.cell(row=r, column=1, value=label)
-        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
         merged.font = Font(bold=True, color=color, size=11)
         merged.fill = total_fill
         merged.alignment = Alignment(horizontal="right", vertical="center")
-        amt = ws.cell(row=r, column=7, value=val)
+        amt = ws.cell(row=r, column=9, value=val)
         amt.number_format = '#,##0.00'
         amt.font = Font(bold=True, color=color, size=11)
         amt.fill = total_fill
-        for col in range(1, 8):
+        for col in range(1, 10):
             ws.cell(row=r, column=col).border = cell_border
 
-    # ── Column widths ────────────────────────────────────────────────────────
-    widths = [8, 14, 40, 20, 12, 10, 18]
+    # ── Column widths ────────────────────────────────────────────────────
+    widths = [8, 14, 8, 35, 28, 18, 12, 14, 18]
     for col, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(col)].width = w
     ws.row_dimensions[1].height = 22

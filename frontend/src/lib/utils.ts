@@ -21,6 +21,12 @@ export function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+/** Format a time string "HH:MM:SS" to "HH:MM" */
+export function formatTime(timeStr: string | null | undefined): string {
+  if (!timeStr) return "";
+  return timeStr.slice(0, 5); // "HH:MM"
+}
+
 const MONTH_NAMES = [
   "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
   "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",

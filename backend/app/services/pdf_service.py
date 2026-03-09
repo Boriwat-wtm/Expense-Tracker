@@ -3,7 +3,7 @@ PDF Statement parser — processes files entirely in RAM (no disk writes).
 """
 import io
 import re
-from datetime import date
+from datetime import date, time as dt_time
 from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
 
@@ -11,6 +11,7 @@ import pdfplumber
 
 _DATE_RE = re.compile(r"(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2,4})")
 _AMOUNT_RE = re.compile(r"([0-9]{1,3}(?:,\d{3})*(?:\.\d{2}))")
+_TIME_RE = re.compile(r"\b([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\b")
 
 _CREDIT_RE = re.compile(
     r"โอนเข้า|รับโอน|ฝาก|เงินเข้า|credit|CR\b|deposit", re.IGNORECASE
@@ -56,6 +57,16 @@ def _detect_type(row_text: str) -> str:
     return "expense"  # safe default
 
 
+def _parse_time(text: str) -> Optional[dt_time]:
+    m = _TIME_RE.search(text)
+    if not m:
+        return None
+    try:
+        return dt_time(int(m.group(1)), int(m.group(2)))
+    except ValueError:
+        return None
+
+
 def extract_from_pdf(file_bytes: bytes, password: str = "") -> list[dict[str, Any]]:
     """
     Parse a bank-statement PDF from bytes (never written to disk).
@@ -86,8 +97,10 @@ def extract_from_pdf(file_bytes: bytes, password: str = "") -> list[dict[str, An
                             results.append(
                                 {
                                     "date": txn_date,
+                                    "transaction_time": _parse_time(row_text),
                                     "amount": amount,
-                                    "description": row_text[:200],
+                                    "merchant_name": row_text[:200],
+                                    "description": None,
                                     "type": _detect_type(row_text),
                                     "source": "pdf",
                                 }

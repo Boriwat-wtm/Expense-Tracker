@@ -26,14 +26,16 @@ export interface AuthToken {
 
 // ── Transactions ─────────────────────────────────────────────────────────────
 export type TransactionType = "income" | "expense";
-export type TransactionSource = "slip" | "pdf" | "manual";
+export type TransactionSource = "slip" | "pdf" | "manual" | "merged";
 
 export interface Transaction {
   id: string;
   user_id: string;
   date: string;        // ISO date string  "YYYY-MM-DD"
+  transaction_time: string | null;  // "HH:MM:SS"
   amount: string;      // Decimal as string to avoid float precision issues
   description: string | null;
+  merchant_name: string | null;
   category: string | null;
   type: TransactionType;
   source: TransactionSource;
@@ -42,18 +44,22 @@ export interface Transaction {
 
 export interface TransactionCreate {
   date: string;
+  transaction_time?: string | null;
   amount: string;
-  description?: string;
-  category?: string;
+  description?: string | null;
+  merchant_name?: string | null;
+  category?: string | null;
   type: TransactionType;
   source: TransactionSource;
 }
 
 export interface TransactionUpdate {
   date?: string;
+  transaction_time?: string | null;
   amount?: string;
-  description?: string;
-  category?: string;
+  description?: string | null;
+  merchant_name?: string | null;
+  category?: string | null;
   type?: TransactionType;
 }
 
@@ -97,8 +103,10 @@ export interface CategoryBreakdown {
 export interface PreviewItem {
   filename?: string;
   date: string | null;
+  transaction_time?: string | null;
   amount: string | null;
   description?: string | null;
+  merchant_name?: string | null;
   type?: TransactionType | null;
   source: TransactionSource;
   error?: string;
