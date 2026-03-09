@@ -67,11 +67,11 @@ export default function History() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-bold text-gray-900">ประวัติธุรกรรม</h2>
+      <h2 className="text-2xl font-bold" style={{ color: "var(--text)" }}>ประวัติธุรกรรม</h2>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-600">
+      <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="flex items-center gap-2 mb-3 text-sm font-medium" style={{ color: "var(--text-muted)" }}>
           <Filter size={16} /> ฟิลเตอร์
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -79,20 +79,23 @@ export default function History() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
             placeholder="วันเริ่มต้น"
           />
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
             placeholder="วันสิ้นสุด"
           />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as "" | TransactionType)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
           >
             <option value="">ทุกประเภท</option>
             <option value="income">รายรับ</option>
@@ -101,7 +104,8 @@ export default function History() {
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value as "" | TransactionSource)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
           >
             <option value="">ทุก Source</option>
             <option value="slip">สลิป</option>
@@ -112,34 +116,34 @@ export default function History() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <div className="rounded-xl border overflow-x-auto" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead style={{ backgroundColor: "var(--nav-hover)", borderBottom: "1px solid var(--border)" }}>
             <tr>
               {["วันที่", "คำอธิบาย", "ยอดเงิน", "ประเภท", "Source", "จัดการ"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left font-medium text-gray-600">
+                <th key={h} className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-muted)" }}>
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-gray-400">
+                <td colSpan={6} className="text-center py-12" style={{ color: "var(--text-muted)" }}>
                   กำลังโหลด...
                 </td>
               </tr>
             ) : transactions.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-gray-400">
+                <td colSpan={6} className="text-center py-12" style={{ color: "var(--text-muted)" }}>
                   ยังไม่มีรายการ
                 </td>
               </tr>
             ) : (
               transactions.map((txn) =>
                 editId === txn.id ? (
-                  <tr key={txn.id} className="bg-blue-50">
+                  <tr key={txn.id} style={{ backgroundColor: "var(--primary-light)" }}>
                     <td className="px-4 py-2">
                       <input
                         type="date"
@@ -177,43 +181,39 @@ export default function History() {
                         <option value="expense">รายจ่าย</option>
                       </select>
                     </td>
-                    <td className="px-4 py-2 text-gray-500">{SOURCE_LABELS[txn.source]}</td>
+                    <td className="px-4 py-2" style={{ color: "var(--text-muted)" }}>{SOURCE_LABELS[txn.source]}</td>
                     <td className="px-4 py-2 flex gap-2">
-                      <button onClick={saveEdit} className="text-green-600 hover:text-green-700">
+                      <button onClick={saveEdit} style={{ color: "var(--income)" }} className="hover:opacity-80">
                         <CheckCircle size={18} />
                       </button>
-                      <button onClick={() => setEditId(null)} className="text-gray-400 hover:text-gray-600">
+                      <button onClick={() => setEditId(null)} style={{ color: "var(--text-muted)" }} className="hover:opacity-80">
                         <XCircle size={18} />
                       </button>
                     </td>
                   </tr>
                 ) : (
-                  <tr key={txn.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-700">{formatDate(txn.date)}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
+                  <tr key={txn.id} className="transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td className="px-4 py-3" style={{ color: "var(--text)" }}>{formatDate(txn.date)}</td>
+                    <td className="px-4 py-3 max-w-xs truncate" style={{ color: "var(--text-muted)" }}>
                       {txn.description ?? "-"}
                     </td>
-                    <td
-                      className={`px-4 py-3 font-medium ${
-                        txn.type === "income" ? "text-green-600" : "text-red-500"
-                      }`}
-                    >
+                    <td className="px-4 py-3 font-medium" style={{ color: txn.type === "income" ? "var(--income)" : "var(--expense)" }}>
                       {txn.type === "income" ? "+" : "-"}
                       {formatCurrency(txn.amount)}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                          txn.type === "income"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
+                        className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: txn.type === "income" ? "var(--income-bg)" : "var(--expense-bg)",
+                          color: txn.type === "income" ? "var(--income)" : "var(--expense)",
+                        }}
                       >
                         {TYPE_LABELS[txn.type]}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-text)" }}>
                         {SOURCE_LABELS[txn.source]}
                       </span>
                     </td>
@@ -221,7 +221,8 @@ export default function History() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => startEdit(txn)}
-                          className="text-gray-400 hover:text-brand-600 transition-colors"
+                          className="transition-colors hover:opacity-80"
+                          style={{ color: "var(--text-muted)" }}
                         >
                           <Pencil size={16} />
                         </button>
@@ -229,13 +230,15 @@ export default function History() {
                           <div className="flex gap-1">
                             <button
                               onClick={() => handleDelete(txn.id)}
-                              className="text-red-600 hover:text-red-700 text-xs font-medium"
+                              className="text-xs font-medium hover:opacity-80"
+                              style={{ color: "var(--expense)" }}
                             >
                               ยืนยัน
                             </button>
                             <button
                               onClick={() => setDeleteId(null)}
-                              className="text-gray-400 hover:text-gray-600 text-xs"
+                              className="text-xs hover:opacity-80"
+                              style={{ color: "var(--text-muted)" }}
                             >
                               ยกเลิก
                             </button>
@@ -243,7 +246,8 @@ export default function History() {
                         ) : (
                           <button
                             onClick={() => setDeleteId(txn.id)}
-                            className="text-gray-400 hover:text-red-500 transition-colors"
+                            className="transition-colors hover:opacity-80"
+                            style={{ color: "var(--text-muted)" }}
                           >
                             <Trash2 size={16} />
                           </button>

@@ -43,20 +43,20 @@ export default function Admin() {
     }
   };
 
-  if (loading) return <div className="p-6 text-gray-500">กำลังโหลด...</div>;
+  if (loading) return <div className="p-6" style={{ color: "var(--text-muted)" }}>กำลังโหลด...</div>;
 
   const usedPct = quota ? Math.round((quota.quota_used / quota.quota_limit) * 100) : 0;
-  const barColor = usedPct >= 90 ? "bg-red-500" : usedPct >= 70 ? "bg-orange-400" : "bg-green-500";
+  const barColor = usedPct >= 90 ? "#ef4444" : usedPct >= 70 ? "#f97316" : "var(--income)";
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
+      <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>Admin Panel</h1>
 
       {/* Master Quota Card */}
       {quota && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="rounded-xl border p-6 space-y-4" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-700">Master OCR Quota</h2>
+            <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>Master OCR Quota</h2>
             <button
               onClick={resetQuota}
               disabled={resetting}
@@ -66,50 +66,51 @@ export default function Admin() {
             </button>
           </div>
           {message && (
-            <p className="text-sm text-green-600 font-medium">{message}</p>
+            <p className="text-sm font-medium" style={{ color: "var(--income)" }}>{message}</p>
           )}
           <div className="flex items-end gap-3">
-            <span className="text-3xl font-bold text-gray-800">{quota.quota_used}</span>
-            <span className="text-gray-400 mb-0.5">/ {quota.quota_limit} รูป</span>
-            <span className="ml-auto text-sm text-gray-500">เหลือ {quota.quota_remaining} รูป</span>
+            <span className="text-3xl font-bold" style={{ color: "var(--text)" }}>{quota.quota_used}</span>
+            <span className="mb-0.5" style={{ color: "var(--text-muted)" }}>/ {quota.quota_limit} รูป</span>
+            <span className="ml-auto text-sm" style={{ color: "var(--text-muted)" }}>เหลือ {quota.quota_remaining} รูป</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2.5">
+          <div className="w-full rounded-full h-2.5" style={{ backgroundColor: "var(--progress-track)" }}>
             <div
-              className={`${barColor} h-2.5 rounded-full transition-all`}
-              style={{ width: `${Math.min(usedPct, 100)}%` }}
+              className="h-2.5 rounded-full transition-all"
+              style={{ width: `${Math.min(usedPct, 100)}%`, backgroundColor: barColor }}
             />
           </div>
           {quota.reset_date && (
-            <p className="text-xs text-gray-400">รีเซ็ตล่าสุด: {quota.reset_date}</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>รีเซ็ตล่าสุด: {quota.reset_date}</p>
           )}
         </div>
       )}
 
       {/* Users Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-700">ผู้ใช้งานทั้งหมด ({users.length} คน)</h2>
+      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>ผู้ใช้งานทั้งหมด ({users.length} คน)</h2>
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+          <thead style={{ backgroundColor: "var(--nav-hover)" }}>
             <tr>
-              <th className="px-6 py-3 text-left">Username</th>
-              <th className="px-6 py-3 text-left">Email</th>
-              <th className="px-6 py-3 text-center">OCR Used (เดือนนี้)</th>
-              <th className="px-6 py-3 text-center">Role</th>
+              <th className="px-6 py-3 text-left text-xs uppercase" style={{ color: "var(--text-muted)" }}>Username</th>
+              <th className="px-6 py-3 text-left text-xs uppercase" style={{ color: "var(--text-muted)" }}>Email</th>
+              <th className="px-6 py-3 text-center text-xs uppercase" style={{ color: "var(--text-muted)" }}>OCR Used (เดือนนี้)</th>
+              <th className="px-6 py-3 text-center text-xs uppercase" style={{ color: "var(--text-muted)" }}>Role</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="hover:bg-gray-50">
-                <td className="px-6 py-3 font-medium text-gray-800">@{u.username}</td>
-                <td className="px-6 py-3 text-gray-500">{u.email}</td>
-                <td className="px-6 py-3 text-center text-gray-700">{u.ocr_quota_used}</td>
+              <tr key={u.id} className="transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
+                <td className="px-6 py-3 font-medium" style={{ color: "var(--text)" }}>@{u.username}</td>
+                <td className="px-6 py-3" style={{ color: "var(--text-muted)" }}>{u.email}</td>
+                <td className="px-6 py-3 text-center" style={{ color: "var(--text)" }}>{u.ocr_quota_used}</td>
                 <td className="px-6 py-3 text-center">
                   <select
                     value={u.role}
                     onChange={(e) => changeRole(u.id, e.target.value as UserRole)}
-                    className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="text-xs rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>

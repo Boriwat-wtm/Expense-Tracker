@@ -2,11 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme CSS Variables ─────────────────────────────────────────────────── */
+
+/* 1. Classic Trust (default) */
+:root,
+[data-theme="classic"] {
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --sidebar: #FFFFFF;
+  --sidebar-border: #E2E8F0;
+  --primary: #2563EB;
+  --primary-light: #EFF6FF;
+  --primary-text: #1D4ED8;
+  --income: #16A34A;
+  --income-bg: #F0FDF4;
+  --expense: #DC2626;
+  --expense-bg: #FEF2F2;
+  --text: #111827;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  --nav-active-bg: #EFF6FF;
+  --nav-active-text: #1D4ED8;
+  --nav-hover: #F3F4F6;
+  --badge-bg: #DBEAFE;
+  --badge-text: #1D4ED8;
+  --progress-track: #E5E7EB;
+}
+
+/* 2. Cozy & Playful */
+[data-theme="cozy"] {
+  --bg: #FFFBF0;
+  --card: #FFFFFF;
+  --sidebar: #FFF8F0;
+  --sidebar-border: #F3E8D0;
+  --primary: #8B5CF6;
+  --primary-light: #F5F3FF;
+  --primary-text: #7C3AED;
+  --income: #059669;
+  --income-bg: #ECFDF5;
+  --expense: #E11D48;
+  --expense-bg: #FFF1F2;
+  --text: #1C1917;
+  --text-muted: #78716C;
+  --border: #E7E5E4;
+  --nav-active-bg: #F5F3FF;
+  --nav-active-text: #7C3AED;
+  --nav-hover: #FDF4FF;
+  --badge-bg: #EDE9FE;
+  --badge-text: #7C3AED;
+  --progress-track: #E7E5E4;
+}
+
+/* 3. Industrial Roastery */
+[data-theme="roastery"] {
+  --bg: #FAFAF9;
+  --card: #FFFFFF;
+  --sidebar: #FAFAF9;
+  --sidebar-border: #E7E5E4;
+  --primary: #D97706;
+  --primary-light: #FFFBEB;
+  --primary-text: #B45309;
+  --income: #4D7C0F;
+  --income-bg: #F7FEE7;
+  --expense: #9F1239;
+  --expense-bg: #FFF1F2;
+  --text: #1C1917;
+  --text-muted: #78716C;
+  --border: #D6D3D1;
+  --nav-active-bg: #FFFBEB;
+  --nav-active-text: #B45309;
+  --nav-hover: #F5F5F4;
+  --badge-bg: #FEF3C7;
+  --badge-text: #B45309;
+  --progress-track: #D6D3D1;
+}
+
+/* 4. Developer Dark Mode */
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --sidebar: #1E293B;
+  --sidebar-border: #334155;
+  --primary: #38BDF8;
+  --primary-light: #0F2132;
+  --primary-text: #7DD3FC;
+  --income: #4ADE80;
+  --income-bg: #052E16;
+  --expense: #F87171;
+  --expense-bg: #1C0A0A;
+  --text: #F1F5F9;
+  --text-muted: #94A3B8;
+  --border: #334155;
+  --nav-active-bg: #0F2132;
+  --nav-active-text: #7DD3FC;
+  --nav-hover: #0F172A;
+  --badge-bg: #1E3A5F;
+  --badge-text: #7DD3FC;
+  --progress-track: #334155;
+}
+
 @layer base {
   * {
-    @apply border-gray-200;
+    border-color: var(--border);
   }
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    background-color: var(--bg);
+    color: var(--text);
+    @apply font-sans;
   }
 }

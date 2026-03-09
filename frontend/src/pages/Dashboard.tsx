@@ -30,17 +30,17 @@ interface StatCardProps {
   title: string;
   value: string;
   icon: React.ReactNode;
-  color: string;
+  valueColor: string; // CSS variable string e.g. "var(--income)"
   bg: string;
 }
 
-function StatCard({ title, value, icon, color, bg }: StatCardProps) {
+function StatCard({ title, value, icon, valueColor, bg }: StatCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
+    <div className="rounded-xl border p-5 flex items-center gap-4" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
       <div className={`${bg} p-3 rounded-xl`}>{icon}</div>
       <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className={`text-xl font-bold ${color}`}>{value}</p>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>{title}</p>
+        <p className="text-xl font-bold" style={{ color: valueColor }}>{value}</p>
       </div>
     </div>
   );
@@ -84,13 +84,14 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header with month filter */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+        <h2 className="text-2xl font-bold" style={{ color: "var(--text)" }}>Dashboard</h2>
         <div className="flex items-center gap-2">
-          <Calendar size={18} className="text-gray-400" />
+          <Calendar size={18} style={{ color: "var(--text-muted)" }} />
           <select
             value={filterValue}
             onChange={(e) => setFilterValue(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
           >
             {MONTH_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -106,63 +107,63 @@ export default function Dashboard() {
         <StatCard
           title={`รายรับ${monthLabel}`}
           value={formatCurrency(summary.total_income)}
-          icon={<TrendingUp size={22} className="text-green-600" />}
-          color="text-green-600"
+          icon={<TrendingUp size={22} style={{ color: "var(--income)" }} />}
+          valueColor="var(--income)"
           bg="bg-green-50"
         />
         <StatCard
           title={`รายจ่าย${monthLabel}`}
           value={formatCurrency(summary.total_expense)}
-          icon={<TrendingDown size={22} className="text-red-500" />}
-          color="text-red-500"
+          icon={<TrendingDown size={22} style={{ color: "var(--expense)" }} />}
+          valueColor="var(--expense)"
           bg="bg-red-50"
         />
         <StatCard
           title={`ยอดคงเหลือ${monthLabel}`}
           value={formatCurrency(summary.balance)}
-          icon={<Wallet size={22} className="text-brand-600" />}
-          color={summary.balance >= 0 ? "text-brand-700" : "text-red-600"}
+          icon={<Wallet size={22} style={{ color: "var(--primary)" }} />}
+          valueColor={summary.balance >= 0 ? "var(--income)" : "var(--expense)"}
           bg="bg-brand-50"
         />
         {/* Per-user OCR usage */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="rounded-xl border p-5" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <div className="flex items-center gap-3 mb-1">
             <div className="bg-purple-50 p-3 rounded-xl">
               <ImageIcon size={22} className="text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">OCR ของฉันเดือนนี้</p>
-              <p className="font-bold text-gray-900">{summary.ocr_quota_used} รูป</p>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>OCR ของฉันเดือนนี้</p>
+              <p className="font-bold" style={{ color: "var(--text)" }}>{summary.ocr_quota_used} รูป</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Master Quota shared pool */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="rounded-xl border p-5" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="bg-orange-50 p-2.5 rounded-xl">
               <Users size={20} className="text-orange-500" />
             </div>
             <div>
-              <p className="font-semibold text-gray-800">โควต้า OCR รวม (Master Pool)</p>
-              <p className="text-xs text-gray-500">
+              <p className="font-semibold" style={{ color: "var(--text)" }}>โควต้า OCR รวม (Master Pool)</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 ทุก User ใช้ร่วมกัน — reset ต้นเดือน
               </p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-2xl font-bold" style={{ color: "var(--text)" }}>
               {summary.master_quota_remaining.toLocaleString()}
-              <span className="text-sm font-normal text-gray-500 ml-1">รูปที่เหลือ</span>
+              <span className="text-sm font-normal ml-1" style={{ color: "var(--text-muted)" }}>รูปที่เหลือ</span>
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               ใช้ไปแล้ว {summary.master_quota_used} / {summary.master_quota_limit} รูป
             </p>
           </div>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-3">
+        <div className="w-full rounded-full h-3" style={{ backgroundColor: "var(--progress-track)" }}>
           <div
             className={`h-3 rounded-full transition-all ${
               masterPct >= 90
@@ -194,17 +195,17 @@ export default function Dashboard() {
       />
 
       {/* Recent Transactions */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-800 mb-4">
+      <div className="rounded-xl border p-5" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <h3 className="font-semibold mb-4" style={{ color: "var(--text)" }}>
           รายการล่าสุด{monthLabel && ` — ${monthLabel.trim()}`}
         </h3>
         {recent.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-8">ไม่มีรายการในช่วงเวลานี้</p>
+          <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>ไม่มีรายการในช่วงเวลานี้</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-400 border-b border-gray-100 text-left">
+                <tr className="text-left" style={{ color: "var(--text-muted)", borderBottom: "1px solid var(--border)" }}>
                   <th className="pb-2 pr-4 font-medium">วันที่</th>
                   <th className="pb-2 pr-4 font-medium">รายการ</th>
                   <th className="pb-2 pr-4 font-medium">หมวดหมู่</th>
@@ -213,26 +214,25 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {recent.map((txn) => (
-                  <tr key={txn.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                    <td className="py-2.5 pr-4 text-gray-500 whitespace-nowrap">
+                  <tr key={txn.id} className="last:border-0 transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td className="py-2.5 pr-4 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
                       {formatDate(txn.date)}
                     </td>
-                    <td className="py-2.5 pr-4 text-gray-700 max-w-[200px] truncate">
+                    <td className="py-2.5 pr-4 max-w-[200px] truncate" style={{ color: "var(--text)" }}>
                       {txn.description || "—"}
                     </td>
                     <td className="py-2.5 pr-4">
                       {txn.category ? (
-                        <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                        <span className="inline-block text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-text)" }}>
                           {txn.category}
                         </span>
                       ) : (
-                        <span className="text-gray-300 text-xs">—</span>
+                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>—</span>
                       )}
                     </td>
                     <td
-                      className={`py-2.5 text-right font-semibold whitespace-nowrap ${
-                        txn.type === "income" ? "text-green-600" : "text-red-500"
-                      }`}
+                      className="py-2.5 text-right font-semibold whitespace-nowrap"
+                      style={{ color: txn.type === "income" ? "var(--income)" : "var(--expense)" }}
                     >
                       {txn.type === "income" ? "+" : "-"}
                       {formatCurrency(txn.amount)}

@@ -36,10 +36,10 @@ export default function DashboardCharts({ monthly, categoryBreakdown }: Props) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Category Doughnut Chart */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-800 mb-4">สัดส่วนรายจ่ายตามหมวดหมู่</h3>
+      <div className="rounded-xl border p-5" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <h3 className="font-semibold mb-4" style={{ color: "var(--text)" }}>สัดส่วนรายจ่ายตามหมวดหมู่</h3>
         {categoryBreakdown.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[260px] text-gray-400 gap-1">
+          <div className="flex flex-col items-center justify-center h-[260px] gap-1" style={{ color: "var(--text-muted)" }}>
             <p className="text-sm">ยังไม่มีข้อมูลหมวดหมู่</p>
             <p className="text-xs">แก้ไขรายการและเพิ่ม Category เพื่อดูกราฟนี้</p>
           </div>
@@ -72,8 +72,8 @@ export default function DashboardCharts({ monthly, categoryBreakdown }: Props) {
       </div>
 
       {/* Bar Chart */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-800 mb-4">
+      <div className="rounded-xl border p-5" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <h3 className="font-semibold mb-4" style={{ color: "var(--text)" }}>
           รายรับ / รายจ่าย รายเดือน ({monthly.year})
         </h3>
         <ResponsiveContainer width="100%" height={260}>

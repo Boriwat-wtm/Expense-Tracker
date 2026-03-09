@@ -125,8 +125,8 @@ export default function Report() {
             <FileSpreadsheet size={22} className="text-green-600" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">สรุปรายงาน</h2>
-            <p className="text-sm text-gray-400">{monthLabel}</p>
+            <h2 className="text-2xl font-bold" style={{ color: "var(--text)" }}>สรุปรายงาน</h2>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>{monthLabel}</p>
           </div>
         </div>
         <button
@@ -140,17 +140,18 @@ export default function Report() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-600">
+      <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="flex items-center gap-2 mb-3 text-sm font-medium" style={{ color: "var(--text-muted)" }}>
           <Filter size={15} /> ฟิลเตอร์
         </div>
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <Calendar size={15} className="text-gray-400" />
+            <Calendar size={15} style={{ color: "var(--text-muted)" }} />
             <select
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
             >
               {MONTH_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -162,7 +163,8 @@ export default function Report() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as "" | TransactionType)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
           >
             <option value="">ทุกประเภท</option>
             <option value="income">รายรับ</option>
@@ -173,110 +175,109 @@ export default function Report() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">รายรับรวม</p>
-          <p className="text-lg font-bold text-green-600">{formatCurrency(totalIncome)}</p>
+        <div className="rounded-xl border p-4 text-center" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>รายรับรวม</p>
+          <p className="text-lg font-bold" style={{ color: "var(--income)" }}>{formatCurrency(totalIncome)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">รายจ่ายรวม</p>
-          <p className="text-lg font-bold text-red-500">{formatCurrency(totalExpense)}</p>
+        <div className="rounded-xl border p-4 text-center" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>รายจ่ายรวม</p>
+          <p className="text-lg font-bold" style={{ color: "var(--expense)" }}>{formatCurrency(totalExpense)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">ยอดคงเหลือ</p>
-          <p className={`text-lg font-bold ${balance >= 0 ? "text-brand-700" : "text-red-600"}`}>
+        <div className="rounded-xl border p-4 text-center" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>ยอดคงเหลือ</p>
+          <p className="text-lg font-bold" style={{ color: balance >= 0 ? "var(--income)" : "var(--expense)" }}>
             {formatCurrency(balance)}
           </p>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <div className="rounded-xl border overflow-x-auto" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead style={{ backgroundColor: "var(--nav-hover)", borderBottom: "1px solid var(--border)" }}>
             <tr>
               {["#", "วันที่", "คำอธิบาย", "หมวดหมู่", "ประเภท", "Source", "จำนวนเงิน"].map((h) => (
                 <th
                   key={h}
-                  className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap"
+                  className="px-4 py-3 text-left font-medium whitespace-nowrap"
+                  style={{ color: "var(--text-muted)" }}
                 >
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400">กำลังโหลด...</td>
+                <td colSpan={7} className="text-center py-12" style={{ color: "var(--text-muted)" }}>กำลังโหลด...</td>
               </tr>
             ) : transactions.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400">ไม่มีรายการในช่วงเวลานี้</td>
+                <td colSpan={7} className="text-center py-12" style={{ color: "var(--text-muted)" }}>ไม่มีรายการในช่วงเวลานี้</td>
               </tr>
             ) : (
               <>
                 {transactions.map((txn, i) => (
-                  <tr key={txn.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-2.5 text-gray-400 text-xs">{i + 1}</td>
-                    <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">{formatDate(txn.date)}</td>
-                    <td className="px-4 py-2.5 text-gray-700 max-w-[220px] truncate">
+                  <tr key={txn.id} className="transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td className="px-4 py-2.5 text-xs" style={{ color: "var(--text-muted)" }}>{i + 1}</td>
+                    <td className="px-4 py-2.5 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{formatDate(txn.date)}</td>
+                    <td className="px-4 py-2.5 max-w-[220px] truncate" style={{ color: "var(--text)" }}>
                       {txn.description ?? "—"}
                     </td>
                     <td className="px-4 py-2.5">
                       {txn.category ? (
-                        <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-text)" }}>
                           {txn.category}
                         </span>
                       ) : (
-                        <span className="text-gray-300 text-xs">—</span>
+                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>—</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5">
                       <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          txn.type === "income"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-red-50 text-red-600"
-                        }`}
+                        className="text-xs font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: txn.type === "income" ? "var(--income-bg)" : "var(--expense-bg)",
+                          color: txn.type === "income" ? "var(--income)" : "var(--expense)",
+                        }}
                       >
                         {TYPE_LABELS[txn.type]}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-gray-500 text-xs">{SOURCE_LABELS[txn.source]}</td>
+                    <td className="px-4 py-2.5 text-xs" style={{ color: "var(--text-muted)" }}>{SOURCE_LABELS[txn.source]}</td>
                     <td
-                      className={`px-4 py-2.5 font-semibold whitespace-nowrap text-right ${
-                        txn.type === "income" ? "text-green-600" : "text-red-500"
-                      }`}
+                      className="px-4 py-2.5 font-semibold whitespace-nowrap text-right"
+                      style={{ color: txn.type === "income" ? "var(--income)" : "var(--expense)" }}
                     >
                       {txn.type === "income" ? "+" : "−"}{formatCurrency(parseFloat(txn.amount))}
                     </td>
                   </tr>
                 ))}
                 {/* Summary footer */}
-                <tr className="bg-green-50 border-t-2 border-green-200">
-                  <td colSpan={6} className="px-4 py-2.5 text-right text-sm font-semibold text-green-700">
+                <tr style={{ backgroundColor: "var(--income-bg)", borderTop: "2px solid var(--income)" }}>
+                  <td colSpan={6} className="px-4 py-2.5 text-right text-sm font-semibold" style={{ color: "var(--income)" }}>
                     รายรับรวม
                   </td>
-                  <td className="px-4 py-2.5 text-right font-bold text-green-700">
+                  <td className="px-4 py-2.5 text-right font-bold" style={{ color: "var(--income)" }}>
                     {formatCurrency(totalIncome)}
                   </td>
                 </tr>
-                <tr className="bg-red-50">
-                  <td colSpan={6} className="px-4 py-2.5 text-right text-sm font-semibold text-red-600">
+                <tr style={{ backgroundColor: "var(--expense-bg)" }}>
+                  <td colSpan={6} className="px-4 py-2.5 text-right text-sm font-semibold" style={{ color: "var(--expense)" }}>
                     รายจ่ายรวม
                   </td>
-                  <td className="px-4 py-2.5 text-right font-bold text-red-600">
+                  <td className="px-4 py-2.5 text-right font-bold" style={{ color: "var(--expense)" }}>
                     {formatCurrency(totalExpense)}
                   </td>
                 </tr>
-                <tr className="bg-brand-50 border-t border-brand-200">
-                  <td colSpan={6} className="px-4 py-2.5 text-right text-sm font-bold text-brand-700">
+                <tr style={{ backgroundColor: "var(--primary-light)", borderTop: "1px solid var(--border)" }}>
+                  <td colSpan={6} className="px-4 py-2.5 text-right text-sm font-bold" style={{ color: "var(--primary)" }}>
                     ยอดคงเหลือ
                   </td>
                   <td
-                    className={`px-4 py-2.5 text-right text-base font-bold ${
-                      balance >= 0 ? "text-brand-700" : "text-red-600"
-                    }`}
+                    className="px-4 py-2.5 text-right text-base font-bold"
+                    style={{ color: balance >= 0 ? "var(--income)" : "var(--expense)" }}
                   >
                     {formatCurrency(balance)}
                   </td>
@@ -287,7 +288,7 @@ export default function Report() {
         </table>
       </div>
 
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
         แสดง {transactions.length} รายการ • เรียงจากวันแรก → วันสุดท้าย
       </p>
     </div>
