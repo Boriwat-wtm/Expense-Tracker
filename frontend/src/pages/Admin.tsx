@@ -55,7 +55,7 @@ export default function Admin() {
       {/* Master Quota Card */}
       {quota && (
         <div className="rounded-xl border p-6 space-y-4" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>Master OCR Quota</h2>
             <button
               onClick={resetQuota}
@@ -87,9 +87,10 @@ export default function Admin() {
 
       {/* Users Table */}
       <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
-        <div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="px-4 sm:px-6 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
           <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>ผู้ใช้งานทั้งหมด ({users.length} คน)</h2>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead style={{ backgroundColor: "var(--nav-hover)" }}>
             <tr>
@@ -120,6 +121,7 @@ export default function Admin() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

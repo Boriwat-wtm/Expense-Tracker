@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
+import PixelBackground from "@/components/PixelBackground";
 
 const schema = z.object({
   username: z.string().min(3, "อย่างน้อย 3 ตัวอักษร"),
@@ -32,8 +33,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 w-full max-w-sm">
+    <>
+      <PixelBackground />
+      <div
+        className="min-h-screen flex items-center justify-center relative z-10"
+        style={{ background: "linear-gradient(to bottom, #FFF5FB, #EEF0FF)" }}
+      >
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-pink-100 p-8 w-full max-w-sm">
         <h2 className="text-2xl font-bold text-gray-900 mb-1">ยินดีต้อนรับ 👋</h2>
         <p className="text-sm text-gray-500 mb-6">เข้าสู่ระบบเพื่อจัดการรายรับ-รายจ่าย</p>
 
@@ -87,6 +93,7 @@ export default function Login() {
           </Link>
         </p>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

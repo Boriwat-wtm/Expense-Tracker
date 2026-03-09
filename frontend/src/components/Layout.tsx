@@ -1,6 +1,6 @@
 import { type ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Upload, History, LogOut, ShieldCheck, FileSpreadsheet, Settings, X, Check } from "lucide-react";
+import { LayoutDashboard, Upload, History, LogOut, ShieldCheck, FileSpreadsheet, Settings, X, Check, Menu } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEMES, type ThemeId } from "@/hooks/useTheme";
 
@@ -94,7 +94,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   const user = getUser();
   const isAdmin = user?.role === "admin";
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [, forceUpdate] = useState(0);
+
+  // Close drawer on route change
+  useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
   useEffect(() => {
     const handler = () => forceUpdate((n) => n + 1);
@@ -102,106 +106,153 @@ export default function Layout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("themechange", handler);
   }, []);
 
+  // Sidebar nav items shared between desktop and mobile drawer
+  const navItems = (
+    <>
+      <nav className="flex-1 p-3 space-y-1">
+        {NAV.map(({ to, icon: Icon, label }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            style={
+              pathname === to
+                ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
+                : { color: "var(--text-muted)" }
+            }
+            onMouseEnter={(e) => {
+              if (pathname !== to) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)";
+            }}
+            onMouseLeave={(e) => {
+              if (pathname !== to) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+            }}
+          >
+            <Icon size={18} />
+            {label}
+          </Link>
+        ))}
+        {isAdmin && (
+          <Link
+            to="/admin"
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            style={
+              pathname === "/admin"
+                ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
+                : { color: "var(--text-muted)" }
+            }
+            onMouseEnter={(e) => {
+              if (pathname !== "/admin") (e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)";
+            }}
+            onMouseLeave={(e) => {
+              if (pathname !== "/admin") (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+            }}
+          >
+            <ShieldCheck size={18} />
+            Admin Panel
+          </Link>
+        )}
+      </nav>
+      <div className="p-3 space-y-1" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
+        <button
+          onClick={() => setShowThemePicker(true)}
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium transition-colors"
+          style={{ color: "var(--text-muted)" }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)")}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "transparent")}
+        >
+          <Settings size={18} />
+          ตั้งค่าธีม
+        </button>
+        <button
+          onClick={logout}
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium transition-colors"
+          style={{ color: "var(--text-muted)" }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)")}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "transparent")}
+        >
+          <LogOut size={18} />
+          ออกจากระบบ
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "var(--bg)" }}>
-      {/* Sidebar */}
+
+      {/* ── Mobile overlay backdrop ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile drawer (slides in from left) ── */}
       <aside
-        className="w-56 flex flex-col shrink-0"
-        style={{
-          backgroundColor: "var(--sidebar)",
-          borderRight: "1px solid var(--sidebar-border)",
-        }}
+        className={`fixed inset-y-0 left-0 z-40 w-64 flex flex-col transform transition-transform duration-200 md:hidden ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ backgroundColor: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}
       >
-        {/* Logo */}
+        <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
+          <div>
+            <h1 className="text-base font-bold" style={{ color: "var(--primary)" }}>💰 Expense Tracker</h1>
+            {user && (
+              <div className="mt-0.5 flex items-center gap-1.5">
+                <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>@{user.username}</p>
+                {isAdmin && (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-text)" }}>
+                    Admin
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <button onClick={() => setSidebarOpen(false)} style={{ color: "var(--text-muted)" }}>
+            <X size={20} />
+          </button>
+        </div>
+        {navItems}
+      </aside>
+
+      {/* ── Desktop sidebar (always visible) ── */}
+      <aside
+        className="hidden md:flex w-56 flex-col shrink-0"
+        style={{ backgroundColor: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}
+      >
         <div className="p-5" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
           <h1 className="text-lg font-bold" style={{ color: "var(--primary)" }}>💰 Expense Tracker</h1>
           {user && (
             <div className="mt-0.5 flex items-center gap-1.5">
               <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>@{user.username}</p>
               {isAdmin && (
-                <span
-                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                  style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-text)" }}
-                >
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--badge-bg)", color: "var(--badge-text)" }}>
                   Admin
                 </span>
               )}
             </div>
           )}
         </div>
-
-        {/* Nav */}
-        <nav className="flex-1 p-3 space-y-1">
-          {NAV.map(({ to, icon: Icon, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              style={
-                pathname === to
-                  ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
-                  : { color: "var(--text-muted)" }
-              }
-              onMouseEnter={(e) => {
-                if (pathname !== to) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)";
-              }}
-              onMouseLeave={(e) => {
-                if (pathname !== to) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-              }}
-            >
-              <Icon size={18} />
-              {label}
-            </Link>
-          ))}
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              style={
-                pathname === "/admin"
-                  ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
-                  : { color: "var(--text-muted)" }
-              }
-              onMouseEnter={(e) => {
-                if (pathname !== "/admin") (e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)";
-              }}
-              onMouseLeave={(e) => {
-                if (pathname !== "/admin") (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-              }}
-            >
-              <ShieldCheck size={18} />
-              Admin Panel
-            </Link>
-          )}
-        </nav>
-
-        {/* Bottom actions */}
-        <div className="p-3 space-y-1" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
-          <button
-            onClick={() => setShowThemePicker(true)}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "transparent")}
-          >
-            <Settings size={18} />
-            ตั้งค่าธีม
-          </button>
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "var(--nav-hover)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = "transparent")}
-          >
-            <LogOut size={18} />
-            ออกจากระบบ
-          </button>
-        </div>
+        {navItems}
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 p-6 overflow-auto" style={{ color: "var(--text)" }}>{children}</main>
+      {/* ── Main content area ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Mobile top bar */}
+        <header
+          className="md:hidden flex items-center gap-3 px-4 py-3 shrink-0"
+          style={{ backgroundColor: "var(--sidebar)", borderBottom: "1px solid var(--sidebar-border)" }}
+        >
+          <button onClick={() => setSidebarOpen(true)} style={{ color: "var(--text-muted)" }}>
+            <Menu size={22} />
+          </button>
+          <h1 className="text-base font-bold" style={{ color: "var(--primary)" }}>💰 Expense Tracker</h1>
+        </header>
+
+        <main className="flex-1 p-4 md:p-6 overflow-auto" style={{ color: "var(--text)" }}>{children}</main>
+      </div>
 
       {/* Theme Picker Modal */}
       {showThemePicker && <ThemePicker onClose={() => setShowThemePicker(false)} />}

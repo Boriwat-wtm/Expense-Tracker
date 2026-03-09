@@ -141,7 +141,7 @@ export default function Dashboard() {
 
       {/* Master Quota shared pool */}
       <div className="rounded-xl border p-5" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <div className="bg-orange-50 p-2.5 rounded-xl">
               <Users size={20} className="text-orange-500" />

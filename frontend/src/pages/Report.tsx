@@ -124,7 +124,7 @@ export default function Report() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-wrap items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="bg-green-50 p-2.5 rounded-xl">
             <FileSpreadsheet size={22} className="text-green-600" />
@@ -179,7 +179,7 @@ export default function Report() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl border p-4 text-center" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>รายรับรวม</p>
           <p className="text-lg font-bold" style={{ color: "var(--income)" }}>{formatCurrency(totalIncome)}</p>
