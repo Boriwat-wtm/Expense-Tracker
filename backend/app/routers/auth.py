@@ -1,5 +1,3 @@
-import logging
-import traceback
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,33 +12,26 @@ from ..services.auth_service import (
     verify_password,
 )
 
-logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(data: UserRegister, db: Session = Depends(get_db)):
-    try:
-        if db.query(User).filter(User.username == data.username).first():
-            raise HTTPException(status_code=409, detail="Username already taken")
-        if db.query(User).filter(User.email == data.email).first():
-            raise HTTPException(status_code=409, detail="Email already registered")
+    if db.query(User).filter(User.username == data.username).first():
+        raise HTTPException(status_code=409, detail="Username already taken")
+    if db.query(User).filter(User.email == data.email).first():
+        raise HTTPException(status_code=409, detail="Email already registered")
 
-        user = User(
-            username=data.username,
-            email=data.email,
-            password_hash=hash_password(data.password),
-            ocr_quota_reset_date=date.today().replace(day=1),
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error("Register failed: %s\n%s", exc, traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Register error: {exc}") from exc
+    user = User(
+        username=data.username,
+        email=data.email,
+        password_hash=hash_password(data.password),
+        ocr_quota_reset_date=date.today().replace(day=1),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @router.post("/login", response_model=Token)
