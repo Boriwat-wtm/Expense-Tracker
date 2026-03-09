@@ -12,13 +12,15 @@ from app.config import get_settings
 from app.database import Base
 
 # Import all models so Alembic can detect them for autogenerate
-from app.models import User, Transaction  # noqa: F401
+from app.models import User as _User, Transaction as _Transaction  # type: ignore[reportUnusedImport]  # noqa: F401
 
 config = context.config
 settings = get_settings()
 
 # Override sqlalchemy.url from application settings so we read from .env
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# SQLAlchemy 2.0 requires "postgresql://" — Aiven gives "postgres://"
+_db_url = settings.database_url.replace("postgres://", "postgresql://", 1)
+config.set_main_option("sqlalchemy.url", _db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

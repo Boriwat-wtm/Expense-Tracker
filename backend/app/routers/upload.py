@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -24,9 +24,10 @@ def _reset_user_quota_if_new_month(user: User, db: Session) -> None:
     """Reset per-user monthly counter if a new month has started (for per-user tracking)."""
     today = date.today()
     first_of_month = today.replace(day=1)
-    if user.ocr_quota_reset_date is None or user.ocr_quota_reset_date < first_of_month:
-        user.ocr_quota_used = 0
-        user.ocr_quota_reset_date = first_of_month
+    reset_date: Optional[date] = user.ocr_quota_reset_date  # type: ignore[assignment]
+    if reset_date is None or reset_date < first_of_month:
+        user.ocr_quota_used = 0  # type: ignore[assignment]
+        user.ocr_quota_reset_date = first_of_month  # type: ignore[assignment]
         db.flush()
 
 
@@ -35,7 +36,7 @@ async def upload_slips(
     files: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     # Reset per-user counter if new month
     _reset_user_quota_if_new_month(current_user, db)
 
@@ -49,7 +50,7 @@ async def upload_slips(
 
     # ── Master quota check (shared pool across all users) ────────────────────
     master = get_or_create_master_quota(db)
-    master_remaining = master.quota_limit - master.quota_used
+    master_remaining: int = master.quota_limit - master.quota_used  # type: ignore[assignment]
 
     if master_remaining <= 0:
         raise HTTPException(
@@ -68,7 +69,7 @@ async def upload_slips(
             ),
         )
 
-    results = []
+    results: list[dict[str, Any]] = []
     for f in files:
         image_bytes = await f.read()
         try:
@@ -83,8 +84,8 @@ async def upload_slips(
                 result["amount"] = str(result["amount"])
             results.append(result)
             # Deduct 1 from both the user counter and the master pool
-            current_user.ocr_quota_used += 1
-            master.quota_used += 1
+            current_user.ocr_quota_used = int(current_user.ocr_quota_used) + 1  # type: ignore[assignment]
+            master.quota_used = int(master.quota_used) + 1  # type: ignore[assignment]
         except Exception as exc:
             results.append({"filename": f.filename, "error": str(exc), "source": "slip"})
         finally:
@@ -104,7 +105,7 @@ async def upload_pdf(
     password: str = Form(default=""),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     if file.content_type not in (_ALLOWED_PDF_TYPE, "application/octet-stream"):
         raise HTTPException(status_code=415, detail="Only PDF files are accepted.")
 
@@ -122,7 +123,7 @@ async def upload_pdf(
     finally:
         del file_bytes  # Never retain sensitive financial data
 
-    serialisable = [
+    serialisable: list[dict[str, Any]] = [
         {
             **row,
             "date": row["date"].isoformat() if row.get("date") else None,

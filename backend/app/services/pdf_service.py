@@ -5,7 +5,7 @@ import io
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from typing import Optional
+from typing import Any, Optional
 
 import pdfplumber
 
@@ -56,20 +56,21 @@ def _detect_type(row_text: str) -> str:
     return "expense"  # safe default
 
 
-def extract_from_pdf(file_bytes: bytes, password: str = "") -> list[dict]:
+def extract_from_pdf(file_bytes: bytes, password: str = "") -> list[dict[str, Any]]:
     """
     Parse a bank-statement PDF from bytes (never written to disk).
 
     Returns list of dicts with keys: date, amount, description, type, source.
     All in-memory buffers are explicitly deleted after extraction.
     """
-    results: list[dict] = []
+    results: list[dict[str, Any]] = []
     buf = io.BytesIO(file_bytes)
     try:
-        open_kwargs: dict = {}
         if password:
-            open_kwargs["password"] = password
-        with pdfplumber.open(buf, **open_kwargs) as pdf:
+            pdf_ctx = pdfplumber.open(buf, password=password)
+        else:
+            pdf_ctx = pdfplumber.open(buf)
+        with pdf_ctx as pdf:
             for page in pdf.pages:
                 tables = page.extract_tables()
                 for table in tables:

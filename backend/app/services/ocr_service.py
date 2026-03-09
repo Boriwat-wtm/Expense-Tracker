@@ -2,7 +2,7 @@ import base64
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from typing import Optional
+from typing import Any, Optional
 
 import requests
 
@@ -81,7 +81,7 @@ def _parse_amount(text: str) -> Optional[Decimal]:
     return max(amounts) if amounts else None
 
 
-def extract_from_image(image_bytes: bytes) -> dict:
+def extract_from_image(image_bytes: bytes) -> dict[str, Any]:
     """
     Call Google Vision REST API (TEXT_DETECTION) using an API Key.
     Returns: { date, amount, raw_text, source }
@@ -91,7 +91,7 @@ def extract_from_image(image_bytes: bytes) -> dict:
         raise RuntimeError("VISION_API_KEY is not set in .env")
 
     encoded = base64.b64encode(image_bytes).decode("utf-8")
-    payload = {
+    payload: dict[str, Any] = {
         "requests": [
             {
                 "image": {"content": encoded},

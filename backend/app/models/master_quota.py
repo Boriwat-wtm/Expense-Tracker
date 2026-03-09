@@ -1,7 +1,8 @@
 from datetime import date
+from typing import Optional
 
-from sqlalchemy import Column, Date, Integer
-from sqlalchemy.orm import Session
+from sqlalchemy import Integer, Date
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from ..database import Base
 
@@ -12,10 +13,10 @@ class MasterQuota(Base):
     __tablename__ = "master_quota"
 
     # Singleton row — always id = 1
-    id = Column(Integer, primary_key=True, default=1)
-    quota_limit = Column(Integer, nullable=False, default=MASTER_OCR_LIMIT)
-    quota_used = Column(Integer, nullable=False, default=0)
-    reset_date = Column(Date, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    quota_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=MASTER_OCR_LIMIT)
+    quota_used: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    reset_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
 
 def get_or_create_master_quota(db: Session) -> MasterQuota:

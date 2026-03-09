@@ -1,6 +1,5 @@
 from datetime import date
-from typing import Optional
-
+from typing import Any, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
@@ -18,7 +17,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 def get_summary(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     income = db.query(
         func.coalesce(func.sum(Transaction.amount), 0)
     ).filter(
@@ -54,7 +53,7 @@ def get_monthly(
     year: Optional[int] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     if not year:
         year = date.today().year
 
@@ -73,7 +72,7 @@ def get_monthly(
         .all()
     )
 
-    monthly: dict[int, dict] = {}
+    monthly: dict[int, dict[str, Any]] = {}
     for row in rows:
         m = int(row.month)
         if m not in monthly:

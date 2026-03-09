@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -42,7 +43,7 @@ def change_user_role(
 def get_master_quota(
     _: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     """Get current master OCR quota status."""
     master = get_or_create_master_quota(db)
     db.commit()
@@ -58,7 +59,7 @@ def get_master_quota(
 def reset_master_quota(
     _: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     """Manually reset the master OCR quota to 0 used."""
     master = db.query(MasterQuota).filter(MasterQuota.id == 1).with_for_update().first()
     if not master:
