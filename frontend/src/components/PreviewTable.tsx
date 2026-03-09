@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, CheckCircle, AlertCircle } from "lucide-react";
+import { Pencil, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import type { PreviewItem, TransactionType } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 
@@ -12,6 +12,9 @@ interface Props {
 
 export default function PreviewTable({ items, onChange, onConfirm, loading }: Props) {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [debugIdx, setDebugIdx] = useState<number | null>(null);
+
+  const toggleDebug = (idx: number) => setDebugIdx(debugIdx === idx ? null : idx);
 
   const update = (idx: number, field: keyof PreviewItem, value: string) => {
     const updated = items.map((item, i) =>
@@ -94,6 +97,7 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
                   </td>
                 </tr>
               ) : (
+                <>
                 <tr key={idx} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-gray-500 text-xs max-w-[120px] truncate">
                     {item.filename ?? "-"}
@@ -117,14 +121,49 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
                     </span>
                   </td>
                   <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
                     <button
                       onClick={() => setEditingIdx(idx)}
                       className="text-gray-400 hover:text-brand-600 transition-colors"
                     >
                       <Pencil size={16} />
                     </button>
+                    <button
+                      onClick={() => toggleDebug(idx)}
+                      title="ดู raw text จาก OCR"
+                      className="text-gray-400 hover:text-purple-600 transition-colors"
+                    >
+                      {debugIdx === idx ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                    </div>
                   </td>
                 </tr>
+                {debugIdx === idx && (
+                  <tr key={`debug-${idx}`} className="bg-purple-50">
+                    <td colSpan={6} className="px-4 py-3">
+                      <div className="text-xs font-mono text-purple-900 space-y-2">
+                        <p className="font-semibold text-purple-700">🔍 OCR Debug — สิ่งที่ดึงได้</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1">
+                          <span><span className="text-gray-500">วันที่:</span> <b>{item.date ?? "❌ ไม่พบ"}</b></span>
+                          <span><span className="text-gray-500">เวลา:</span> <b>{item.transaction_time ?? "❌ ไม่พบ"}</b></span>
+                          <span><span className="text-gray-500">ยอดเงิน:</span> <b>{item.amount ?? "❌ ไม่พบ"}</b></span>
+                          <span><span className="text-gray-500">ร้าน/ผู้รับ:</span> <b>{item.merchant_name ?? "❌ ไม่พบ"}</b></span>
+                          <span><span className="text-gray-500">คำอธิบาย:</span> <b>{item.description ?? "—"}</b></span>
+                          <span><span className="text-gray-500">ประเภท:</span> <b>{item.type ?? "—"}</b></span>
+                        </div>
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-purple-600 hover:underline select-none">
+                            📄 Raw text ที่ OCR อ่านได้ทั้งหมด (คลิกเพื่อขยาย)
+                          </summary>
+                          <pre className="mt-2 whitespace-pre-wrap break-words bg-white border border-purple-200 rounded p-2 text-gray-700 max-h-60 overflow-y-auto">
+                            {item.raw_text ?? "(ไม่มีข้อมูล)"}
+                          </pre>
+                        </details>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </>
               )
             )}
           </tbody>

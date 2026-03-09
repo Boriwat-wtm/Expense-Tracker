@@ -86,7 +86,31 @@ export default function PixelBackground() {
 
     const ctx = canvas.getContext("2d")!;
 
-    // ── Draw helper ──────────────────────────────────────────────────────────
+    // ── Draw helpers ─────────────────────────────────────────────────────────
+    function drawBalloon(
+      bx: number, by: number,
+      color: string, highlight: string, stringColor: string,
+    ) {
+      const shape: (string | null)[][] = [
+        [null, null, color, color, color, null, null],
+        [null, color, color, color, color, color, null],
+        [color, color, highlight, highlight, color, color, color],
+        [color, color, highlight, color, color, color, color],
+        [color, color, color, color, color, color, color],
+        [color, color, color, color, color, color, color],
+        [null, color, color, color, color, color, null],
+        [null, null, color, color, color, null, null],
+      ];
+      drawSprite(shape, bx, by);
+      // string
+      ctx.fillStyle = stringColor;
+      ctx.globalAlpha = 0.6;
+      for (let i = 0; i < 6; i++) {
+        ctx.fillRect((bx + 3) * S, (by + 8 + i) * S, S, S);
+      }
+      ctx.globalAlpha = 1;
+    }
+
     function drawSprite(
       sprite: (string | null)[][],
       ox: number,
@@ -112,6 +136,19 @@ export default function PixelBackground() {
     // ── State ────────────────────────────────────────────────────────────────
     interface CoinObj { x: number; y: number; alpha: number }
 
+    const balloons = [
+      { x: 15,  baseY: 5,  vx:  0.07, phase: 0,              color: "#FFB0D8", hl: "#FFE0F0", str: "#E07898" },
+      { x: 65,  baseY: 9,  vx: -0.05, phase: Math.PI * 0.7,  color: "#B8D8FF", hl: "#E0EEFF", str: "#6090C8" },
+      { x: 110, baseY: 4,  vx:  0.06, phase: Math.PI * 1.4,  color: "#FFEEB0", hl: "#FFFAE0", str: "#C8A830" },
+    ];
+
+    // clouds float in the middle band (40-60% of screen height)
+    const clouds = [
+      { x: 20,  vy: 0.40, phase: 0.0              },
+      { x: 80,  vy: 0.28, phase: Math.PI * 0.6    },
+      { x: 145, vy: 0.35, phase: Math.PI * 1.2    },
+    ];
+
     const cat = { x: 20, vx: 0.45, frame: 0, tick: 0 };
     const cat2 = { x: -1, vx: -0.3, frame: 1, tick: 5 }; // starts off-screen right
     const coins: CoinObj[] = [];
@@ -135,7 +172,7 @@ export default function PixelBackground() {
       tick++;
       const CW = canvas!.width;
       const CH = canvas!.height;
-      const GY = Math.floor(CH / S) - 14; // ground line in sprite-pixels
+      const GY = Math.floor(CH / S) - 4;  // ground line in sprite-pixels
       const catY = GY - 9;               // cat sits on ground (9 rows tall)
 
       // Initialize cat2 x once we know canvas size
@@ -148,6 +185,47 @@ export default function PixelBackground() {
       bg.addColorStop(1, "#EEF0FF");
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, CW, CH);
+
+      // ── Balloons ──────────────────────────────────────────────────────────
+      for (const b of balloons) {
+        b.phase += 0.008;
+        b.x += b.vx;
+        const bMaxX = CW / S - 9;
+        if (b.x > bMaxX) { b.x = bMaxX; b.vx = -Math.abs(b.vx); }
+        if (b.x < 2)     { b.x = 2;     b.vx =  Math.abs(b.vx); }
+        const curY = b.baseY + 2.5 * Math.sin(b.phase);
+        drawBalloon(Math.floor(b.x), Math.floor(curY), b.color, b.hl, b.str);
+      }
+
+      // ── Clouds (middle band) ─────────────────────────────────────────────
+      const midBase = Math.floor(CH / S * 0.40); // ~40% down
+      for (const cl of clouds) {
+        cl.phase += 0.006;
+        const cx = Math.floor(cl.x);
+        const cy = midBase + Math.round(3 * Math.sin(cl.phase));
+        // draw a pixel-art cloud: 3 overlapping rounded lumps
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = "#FFFFFF";
+        // lump 1 (left)
+        ctx.fillRect((cx + 2) * S, (cy + 1) * S, 5 * S, 3 * S);
+        ctx.fillRect((cx + 3) * S,  cy      * S, 3 * S, 5 * S);
+        // lump 2 (center, tallest)
+        ctx.fillRect((cx + 6) * S, (cy - 1) * S, 6 * S, 3 * S);
+        ctx.fillRect((cx + 7) * S, (cy - 2) * S, 4 * S, 6 * S);
+        // lump 3 (right)
+        ctx.fillRect((cx + 11) * S,  cy      * S, 5 * S, 3 * S);
+        ctx.fillRect((cx + 12) * S, (cy + 1) * S, 3 * S, 4 * S);
+        // base bar connecting all lumps
+        ctx.fillRect((cx + 2)  * S, (cy + 2) * S, 14 * S, 3 * S);
+        // soft highlight (top-left of center lump)
+        ctx.fillStyle = "#F0F4FF";
+        ctx.fillRect((cx + 7) * S, (cy - 2) * S, 2 * S, 2 * S);
+        ctx.globalAlpha = 1;
+
+        // drift slowly left, wrap around
+        cl.x -= 0.04;
+        if (cl.x < -16) cl.x = CW / S + 4;
+      }
 
       // ── Stars / sparkles ──────────────────────────────────────────────────
       for (const s of stars) {
