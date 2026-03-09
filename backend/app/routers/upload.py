@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dependencies import get_current_user
+from ..models.master_quota import get_or_create_master_quota
 from ..models.transaction import Transaction
 from ..models.user import User
 from ..schemas.transaction import BulkConfirm, TransactionOut
@@ -13,21 +14,20 @@ from ..services import ocr_service, pdf_service
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
-OCR_MONTHLY_LIMIT = 50
 _ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 _ALLOWED_PDF_TYPE = "application/pdf"
 _MAX_IMAGE_BYTES = 10 * 1024 * 1024   # 10 MB
 _MAX_PDF_BYTES = 50 * 1024 * 1024     # 50 MB
 
 
-def _maybe_reset_quota(user: User, db: Session) -> None:
-    """Reset monthly OCR quota if a new month has started."""
+def _reset_user_quota_if_new_month(user: User, db: Session) -> None:
+    """Reset per-user monthly counter if a new month has started (for per-user tracking)."""
     today = date.today()
     first_of_month = today.replace(day=1)
     if user.ocr_quota_reset_date is None or user.ocr_quota_reset_date < first_of_month:
         user.ocr_quota_used = 0
         user.ocr_quota_reset_date = first_of_month
-        db.commit()
+        db.flush()
 
 
 @router.post("/slips")
@@ -36,7 +36,8 @@ async def upload_slips(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    _maybe_reset_quota(current_user, db)
+    # Reset per-user counter if new month
+    _reset_user_quota_if_new_month(current_user, db)
 
     # Validate content types up-front
     for f in files:
@@ -46,16 +47,25 @@ async def upload_slips(
                 detail=f"'{f.filename}' is not a supported image type.",
             )
 
-    remaining = OCR_MONTHLY_LIMIT - current_user.ocr_quota_used
-    if remaining <= 0:
+    # ── Master quota check (shared pool across all users) ────────────────────
+    master = get_or_create_master_quota(db)
+    master_remaining = master.quota_limit - master.quota_used
+
+    if master_remaining <= 0:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="OCR quota exhausted for this month (limit 50 images).",
+            detail=(
+                f"โควต้า OCR ของระบบหมดแล้วสำหรับเดือนนี้ "
+                f"(ขีดจำกัด {master.quota_limit} รูป/เดือน)"
+            ),
         )
-    if len(files) > remaining:
+    if len(files) > master_remaining:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Batch exceeds remaining OCR quota ({remaining} images left this month).",
+            detail=(
+                f"จำนวนรูปที่ส่งมา ({len(files)}) เกินโควต้าที่เหลืออยู่ในระบบ "
+                f"({master_remaining} รูป)"
+            ),
         )
 
     results = []
@@ -72,14 +82,20 @@ async def upload_slips(
             if result.get("amount"):
                 result["amount"] = str(result["amount"])
             results.append(result)
+            # Deduct 1 from both the user counter and the master pool
             current_user.ocr_quota_used += 1
+            master.quota_used += 1
         except Exception as exc:
             results.append({"filename": f.filename, "error": str(exc), "source": "slip"})
         finally:
             del image_bytes
 
     db.commit()
-    return {"previews": results, "ocr_quota_used": current_user.ocr_quota_used}
+    return {
+        "previews": results,
+        "user_quota_used": current_user.ocr_quota_used,
+        "master_quota_remaining": master.quota_limit - master.quota_used,
+    }
 
 
 @router.post("/pdf")

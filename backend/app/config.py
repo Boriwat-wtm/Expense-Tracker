@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440
-    google_application_credentials_json: str = ""
+    vision_api_key: str = ""
     cors_origins: str = "http://localhost:5173"
 
     @property

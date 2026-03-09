@@ -6,12 +6,11 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dependencies import get_current_user
+from ..models.master_quota import get_or_create_master_quota
 from ..models.transaction import Transaction, TransactionType
 from ..models.user import User
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
-
-OCR_MONTHLY_LIMIT = 50
 
 
 @router.get("/summary")
@@ -33,13 +32,19 @@ def get_summary(
         Transaction.type == TransactionType.expense,
     ).scalar()
 
+    master = get_or_create_master_quota(db)
+    db.commit()  # persist reset if it just happened
+
     return {
         "total_income": float(income),
         "total_expense": float(expense),
         "balance": float(income) - float(expense),
+        # ── Per-user stats (tracking only) ──────────────────────────────────
         "ocr_quota_used": current_user.ocr_quota_used,
-        "ocr_quota_limit": OCR_MONTHLY_LIMIT,
-        "ocr_quota_remaining": max(0, OCR_MONTHLY_LIMIT - current_user.ocr_quota_used),
+        # ── Master (shared pool) stats ───────────────────────────────────────
+        "master_quota_limit": master.quota_limit,
+        "master_quota_used": master.quota_used,
+        "master_quota_remaining": max(0, master.quota_limit - master.quota_used),
     }
 
 

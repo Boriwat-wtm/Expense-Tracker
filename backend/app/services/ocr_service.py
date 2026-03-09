@@ -1,17 +1,17 @@
-import json
+import base64
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Optional
 
-from google.cloud import vision
-from google.oauth2 import service_account
+import requests
 
 from ..config import get_settings
 
 settings = get_settings()
 
-# Regular expression patterns for parsing slip text
+VISION_URL = "https://vision.googleapis.com/v1/images:annotate"
+# ── Date / Amount regex patterns ─────────────────────────────────────────────────────
 _DATE_PATTERNS = [
     # DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
     re.compile(r"(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2,4})"),
@@ -32,16 +32,6 @@ _AMOUNT_RE = re.compile(
     r"(?:THB|฿|บาท)?\s*([0-9]{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:THB|฿|บาท)?",
     re.IGNORECASE,
 )
-
-
-def _get_vision_client() -> vision.ImageAnnotatorClient:
-    creds_json = settings.google_application_credentials_json
-    if creds_json:
-        creds_dict = json.loads(creds_json)
-        credentials = service_account.Credentials.from_service_account_info(creds_dict)
-        return vision.ImageAnnotatorClient(credentials=credentials)
-    # Falls back to GOOGLE_APPLICATION_CREDENTIALS env var / ADC
-    return vision.ImageAnnotatorClient()
 
 
 def _parse_date(text: str) -> Optional[date]:
@@ -93,27 +83,45 @@ def _parse_amount(text: str) -> Optional[Decimal]:
 
 def extract_from_image(image_bytes: bytes) -> dict:
     """
-    Call Google Vision text_detection on a slip image.
-    Returns a dict with keys: date, amount, raw_text, source.
-    Raises RuntimeError if the Vision API returns an error.
+    Call Google Vision REST API (TEXT_DETECTION) using an API Key.
+    Returns: { date, amount, raw_text, source }
+    Raises RuntimeError on API error.
     """
-    client = _get_vision_client()
-    image = vision.Image(content=image_bytes)
-    response = client.text_detection(image=image)
+    if not settings.vision_api_key:
+        raise RuntimeError("VISION_API_KEY is not set in .env")
 
-    if response.error.message:
-        raise RuntimeError(f"Vision API error: {response.error.message}")
+    encoded = base64.b64encode(image_bytes).decode("utf-8")
+    payload = {
+        "requests": [
+            {
+                "image": {"content": encoded},
+                "features": [{"type": "TEXT_DETECTION", "maxResults": 1}],
+            }
+        ]
+    }
 
-    full_text = (
-        response.full_text_annotation.text
-        if response.full_text_annotation
-        else ""
+    response = requests.post(
+        VISION_URL,
+        params={"key": settings.vision_api_key},
+        json=payload,
+        timeout=30,
     )
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Vision API returned {response.status_code}: {response.text[:200]}"
+        )
+
+    resp = response.json().get("responses", [{}])[0]
+    if "error" in resp:
+        raise RuntimeError(f"Vision API error: {resp['error'].get('message', 'unknown')}")
+
+    annotations = resp.get("textAnnotations", [])
+    full_text = annotations[0].get("description", "") if annotations else ""
 
     return {
         "date": _parse_date(full_text),
         "amount": _parse_amount(full_text),
-        # Truncate raw text so the response stays small
         "raw_text": full_text[:500],
         "source": "slip",
     }

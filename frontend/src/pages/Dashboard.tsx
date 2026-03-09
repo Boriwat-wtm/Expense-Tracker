@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Wallet, Image } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Users, ImageIcon } from "lucide-react";
 import { useDashboard } from "@/hooks/useDashboard";
 import DashboardCharts from "@/components/DashboardCharts";
 import { formatCurrency } from "@/lib/utils";
@@ -36,9 +36,9 @@ export default function Dashboard() {
   if (error || !summary || !monthly)
     return <p className="text-red-500">{error ?? "ไม่สามารถโหลดข้อมูลได้"}</p>;
 
-  const quotaPct = Math.min(
+  const masterPct = Math.min(
     100,
-    Math.round((summary.ocr_quota_used / summary.ocr_quota_limit) * 100)
+    Math.round((summary.master_quota_used / summary.master_quota_limit) * 100)
   );
 
   return (
@@ -68,28 +68,66 @@ export default function Dashboard() {
           color={summary.balance >= 0 ? "text-brand-700" : "text-red-600"}
           bg="bg-brand-50"
         />
+        {/* Per-user OCR usage */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-1">
             <div className="bg-purple-50 p-3 rounded-xl">
-              <Image size={22} className="text-purple-600" />
+              <ImageIcon size={22} className="text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">โควต้า OCR</p>
-              <p className="font-bold text-gray-900">
-                {summary.ocr_quota_used} / {summary.ocr_quota_limit} รูป
+              <p className="text-sm text-gray-500">OCR ของฉันเดือนนี้</p>
+              <p className="font-bold text-gray-900">{summary.ocr_quota_used} รูป</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Master Quota shared pool */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-orange-50 p-2.5 rounded-xl">
+              <Users size={20} className="text-orange-500" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">โควต้า OCR รวม (Master Pool)</p>
+              <p className="text-xs text-gray-500">
+                ทุก User ใช้ร่วมกัน — reset ต้นเดือน
               </p>
             </div>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full transition-all ${
-                quotaPct >= 80 ? "bg-red-500" : "bg-purple-500"
-              }`}
-              style={{ width: `${quotaPct}%` }}
-            />
+          <div className="text-right">
+            <p className="text-2xl font-bold text-gray-900">
+              {summary.master_quota_remaining.toLocaleString()}
+              <span className="text-sm font-normal text-gray-500 ml-1">รูปที่เหลือ</span>
+            </p>
+            <p className="text-xs text-gray-400">
+              ใช้ไปแล้ว {summary.master_quota_used} / {summary.master_quota_limit} รูป
+            </p>
           </div>
-          <p className="text-xs text-gray-400 mt-1">เหลือ {summary.ocr_quota_remaining} รูป</p>
         </div>
+        <div className="w-full bg-gray-100 rounded-full h-3">
+          <div
+            className={`h-3 rounded-full transition-all ${
+              masterPct >= 90
+                ? "bg-red-500"
+                : masterPct >= 70
+                ? "bg-orange-400"
+                : "bg-green-500"
+            }`}
+            style={{ width: `${masterPct}%` }}
+          />
+        </div>
+        {masterPct >= 90 && (
+          <p className="text-xs text-red-500 mt-2 font-medium">
+            ⚠️ โควต้าใกล้หมด! เหลือ {summary.master_quota_remaining} รูปเท่านั้น
+          </p>
+        )}
+        {summary.master_quota_remaining === 0 && (
+          <p className="text-xs text-red-600 mt-2 font-bold">
+            🚫 โควต้าหมดแล้ว — ไม่สามารถใช้ OCR ได้จนกว่าจะถึงต้นเดือนหน้า
+          </p>
+        )}
       </div>
 
       {/* Charts */}

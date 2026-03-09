@@ -48,9 +48,10 @@ export interface DashboardSummary {
   total_income: number;
   total_expense: number;
   balance: number;
-  ocr_quota_used: number;
-  ocr_quota_limit: number;
-  ocr_quota_remaining: number;
+  ocr_quota_used: number;          // per-user tracking this month
+  master_quota_limit: number;      // shared pool limit (800)
+  master_quota_used: number;       // shared pool consumed this month
+  master_quota_remaining: number;  // shared pool remaining
 }
 
 export interface MonthlyData {
