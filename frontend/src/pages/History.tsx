@@ -5,20 +5,20 @@ import type { Transaction, TransactionSource, TransactionType } from "@/types";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 
 const TYPE_LABELS: Record<TransactionType, string> = {
-  income: "à¸£à¸²à¸¢à¸£à¸±à¸š",
-  expense: "à¸£à¸²à¸¢à¸ˆà¹ˆà¸²à¸¢",
+  income: "รายรับ",
+  expense: "รายจ่าย",
 };
 
 const SOURCE_CONFIG: Record<TransactionSource, { label: string; bg: string; color: string }> = {
-  slip:   { label: "à¸ªà¸¥à¸´à¸›",        bg: "#EFF6FF", color: "#2563EB" },
-  pdf:    { label: "Statement",   bg: "#F0FDF4", color: "#16A34A" },
-  merged: { label: "à¸¢à¸·à¸™à¸¢à¸±à¸™à¹à¸¥à¹‰à¸§ âœ“", bg: "#F5F3FF", color: "#7C3AED" },
-  manual: { label: "Manual",      bg: "var(--badge-bg)", color: "var(--badge-text)" },
+  slip:   { label: "สลิป",          bg: "#EFF6FF", color: "#2563EB" },
+  pdf:    { label: "Statement",     bg: "#F0FDF4", color: "#16A34A" },
+  merged: { label: "ยืนยันแล้ว ✓",  bg: "#F5F3FF", color: "#7C3AED" },
+  manual: { label: "Manual",        bg: "var(--badge-bg)", color: "var(--badge-text)" },
 };
 
 const CATEGORIES = [
-  "", "à¸­à¸²à¸«à¸²à¸£", "à¹€à¸”à¸´à¸™à¸—à¸²à¸‡", "à¸Šà¹‰à¸­à¸›à¸›à¸´à¹‰à¸‡", "à¸„à¸§à¸²à¸¡à¸šà¸±à¸™à¹€à¸—à¸´à¸‡",
-  "à¸ªà¸¸à¸‚à¸ à¸²à¸ž", "à¸à¸²à¸£à¸¨à¸¶à¸à¸©à¸²", "à¸—à¸µà¹ˆà¸žà¸±à¸", "à¸ªà¸²à¸˜à¸²à¸£à¸“à¸¹à¸›à¹‚à¸ à¸„", "à¸­à¸­à¸¡à¸—à¸£à¸±à¸žà¸¢à¹Œ", "à¸­à¸·à¹ˆà¸™à¹†",
+  "", "อาหาร", "เดินทาง", "ช้อปปิ้ง", "ความบันเทิง",
+  "สุขภาพ", "การศึกษา", "ที่พัก", "สาธารณูปโภค", "ออมทรัพย์", "อื่นๆ",
 ];
 
 export default function History() {
@@ -93,16 +93,16 @@ export default function History() {
     );
   };
 
-  const COLS = 7; // total columns
+  const COLS = 7;
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-bold" style={{ color: "var(--text)" }}>à¸›à¸£à¸°à¸§à¸±à¸•à¸´à¸˜à¸¸à¸£à¸à¸£à¸£à¸¡</h2>
+      <h2 className="text-2xl font-bold" style={{ color: "var(--text)" }}>ประวัติธุรกรรม</h2>
 
       {/* Filters */}
       <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
         <div className="flex items-center gap-2 mb-3 text-sm font-medium" style={{ color: "var(--text-muted)" }}>
-          <Filter size={16} /> à¸Ÿà¸´à¸¥à¹€à¸•à¸­à¸£à¹Œ
+          <Filter size={16} /> ฟิลเตอร์
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <input
@@ -125,9 +125,9 @@ export default function History() {
             className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
           >
-            <option value="">à¸—à¸¸à¸à¸›à¸£à¸°à¹€à¸ à¸—</option>
-            <option value="income">à¸£à¸²à¸¢à¸£à¸±à¸š</option>
-            <option value="expense">à¸£à¸²à¸¢à¸ˆà¹ˆà¸²à¸¢</option>
+            <option value="">ทุกประเภท</option>
+            <option value="income">รายรับ</option>
+            <option value="expense">รายจ่าย</option>
           </select>
           <select
             value={sourceFilter}
@@ -135,10 +135,10 @@ export default function History() {
             className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
           >
-            <option value="">à¸—à¸¸à¸ Source</option>
-            <option value="slip">à¸ªà¸¥à¸´à¸›</option>
+            <option value="">ทุก Source</option>
+            <option value="slip">สลิป</option>
             <option value="pdf">Statement</option>
-            <option value="merged">à¸¢à¸·à¸™à¸¢à¸±à¸™à¹à¸¥à¹‰à¸§</option>
+            <option value="merged">ยืนยันแล้ว</option>
             <option value="manual">Manual</option>
           </select>
         </div>
@@ -149,7 +149,7 @@ export default function History() {
         <table className="w-full text-sm">
           <thead style={{ backgroundColor: "var(--nav-hover)", borderBottom: "1px solid var(--border)" }}>
             <tr>
-              {["à¸§à¸±à¸™à¸—à¸µà¹ˆ/à¹€à¸§à¸¥à¸²", "à¸£à¸²à¸¢à¸à¸²à¸£", "à¸¢à¸­à¸”à¹€à¸‡à¸´à¸™", "à¸«à¸¡à¸§à¸”à¸«à¸¡à¸¹à¹ˆ", "à¸›à¸£à¸°à¹€à¸ à¸—", "Source", "à¸ˆà¸±à¸”à¸à¸²à¸£"].map((h) => (
+              {["วันที่/เวลา", "รายการ", "ยอดเงิน", "หมวดหมู่", "ประเภท", "Source", "จัดการ"].map((h) => (
                 <th key={h} className="px-4 py-3 text-left font-medium whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
                   {h}
                 </th>
@@ -160,19 +160,19 @@ export default function History() {
             {loading ? (
               <tr>
                 <td colSpan={COLS} className="text-center py-12" style={{ color: "var(--text-muted)" }}>
-                  à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”...
+                  กำลังโหลด...
                 </td>
               </tr>
             ) : transactions.length === 0 ? (
               <tr>
                 <td colSpan={COLS} className="text-center py-12" style={{ color: "var(--text-muted)" }}>
-                  à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸²à¸¢à¸à¸²à¸£
+                  ยังไม่มีรายการ
                 </td>
               </tr>
             ) : (
               transactions.map((txn) =>
                 editId === txn.id ? (
-                  /* â”€â”€ Edit row â”€â”€ */
+                  /* ── Edit row ── */
                   <tr key={txn.id} style={{ backgroundColor: "var(--primary-light)", borderBottom: "1px solid var(--border)" }}>
                     {/* Date + Time */}
                     <td className="px-3 py-2">
@@ -199,7 +199,7 @@ export default function History() {
                         onChange={(e) => setEditFields((p) => ({ ...p, description: e.target.value }))}
                         className="border rounded px-2 py-1 text-sm w-44 block mb-1"
                         style={{ borderColor: "var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
-                        placeholder="à¸šà¸±à¸™à¸—à¸¶à¸à¸Šà¹ˆà¸§à¸¢à¸ˆà¸³"
+                        placeholder="บันทึกช่วยจำ"
                       />
                       <input
                         type="text"
@@ -207,7 +207,7 @@ export default function History() {
                         onChange={(e) => setEditFields((p) => ({ ...p, merchant_name: e.target.value }))}
                         className="border rounded px-2 py-1 text-sm w-44 block"
                         style={{ borderColor: "var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
-                        placeholder="à¸Šà¸·à¹ˆà¸­à¸£à¹‰à¸²à¸™/à¸œà¸¹à¹‰à¸£à¸±à¸š"
+                        placeholder="ชื่อร้าน/ผู้รับ"
                       />
                     </td>
                     {/* Amount */}
@@ -230,7 +230,7 @@ export default function History() {
                         style={{ borderColor: "var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
                       >
                         {CATEGORIES.map((c) => (
-                          <option key={c} value={c}>{c || "â€” à¹„à¸¡à¹ˆà¸£à¸°à¸šà¸¸ â€”"}</option>
+                          <option key={c} value={c}>{c || "— ไม่ระบุ —"}</option>
                         ))}
                       </select>
                     </td>
@@ -242,8 +242,8 @@ export default function History() {
                         className="border rounded px-2 py-1 text-sm"
                         style={{ borderColor: "var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
                       >
-                        <option value="income">à¸£à¸²à¸¢à¸£à¸±à¸š</option>
-                        <option value="expense">à¸£à¸²à¸¢à¸ˆà¹ˆà¸²à¸¢</option>
+                        <option value="income">รายรับ</option>
+                        <option value="expense">รายจ่าย</option>
                       </select>
                     </td>
                     {/* Source (read-only in edit) */}
@@ -263,7 +263,7 @@ export default function History() {
                     </td>
                   </tr>
                 ) : (
-                  /* â”€â”€ View row â”€â”€ */
+                  /* ── View row ── */
                   <tr key={txn.id} className="transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
                     {/* Date + Time */}
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -283,14 +283,14 @@ export default function History() {
                         </p>
                       )}
                       {!txn.description && !txn.merchant_name && (
-                        <span style={{ color: "var(--text-muted)" }}>â€”</span>
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
                       )}
                     </td>
                     {/* Amount */}
                     <td className="px-4 py-3 font-semibold whitespace-nowrap" style={{ color: txn.type === "income" ? "var(--income)" : "var(--expense)" }}>
-                      {txn.type === "income" ? "+" : "âˆ’"}{formatCurrency(txn.amount)}
+                      {txn.type === "income" ? "+" : "−"}{formatCurrency(txn.amount)}
                     </td>
-                    {/* Category â€” inline editable */}
+                    {/* Category — inline editable */}
                     <td className="px-4 py-3">
                       <select
                         value={txn.category ?? ""}
@@ -299,7 +299,7 @@ export default function History() {
                         style={{ border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)" }}
                       >
                         {CATEGORIES.map((c) => (
-                          <option key={c} value={c}>{c || "â€” à¸£à¸°à¸šà¸¸ â€”"}</option>
+                          <option key={c} value={c}>{c || "— ระบุ —"}</option>
                         ))}
                       </select>
                     </td>
@@ -346,14 +346,14 @@ export default function History() {
                               className="text-xs font-medium hover:opacity-80"
                               style={{ color: "var(--expense)" }}
                             >
-                              à¸¢à¸·à¸™à¸¢à¸±à¸™
+                              ยืนยัน
                             </button>
                             <button
                               onClick={() => setDeleteId(null)}
                               className="text-xs hover:opacity-80"
                               style={{ color: "var(--text-muted)" }}
                             >
-                              à¸¢à¸à¹€à¸¥à¸´à¸
+                              ยกเลิก
                             </button>
                           </div>
                         ) : (
