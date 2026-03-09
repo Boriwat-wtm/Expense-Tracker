@@ -57,6 +57,14 @@ _SHOP_LINE_RE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
+# ── Memo / note field ────────────────────────────────────────────────────────
+# KBank: "บันทึกช่วยจ๋า: xxx"  / SCB: "หมายเหตุ: xxx"  / other: "note: xxx" / "memo: xxx"
+_MEMO_RE = re.compile(
+    r"(?:บันทึก(?:ช่วยจ๋า|ช่วยจำ)?|หมายเหตุ|memo|note|ref\.?\s*no)"
+    r"\s*[:\s]\s*(.{2,80})",
+    re.IGNORECASE,
+)
+
 
 def _parse_time(text: str) -> Optional[dt_time]:
     m = _TIME_RE.search(text)
@@ -151,6 +159,14 @@ def _parse_merchant(text: str) -> Optional[str]:
     return None
 
 
+def _parse_description(text: str) -> Optional[str]:
+    """Extract memo/note field from slip text (e.g. 'บันทึกช่วยจ๋า: ลองปุ้มไลค์ให้อ้วน')."""
+    m = _MEMO_RE.search(text)
+    if m:
+        return m.group(1).strip()[:120]
+    return None
+
+
 def extract_from_image(image_bytes: bytes) -> dict[str, Any]:
     """
     Call Google Vision REST API (TEXT_DETECTION) using an API Key.
@@ -194,6 +210,7 @@ def extract_from_image(image_bytes: bytes) -> dict[str, Any]:
         "transaction_time": _parse_time(full_text),
         "amount": _parse_amount(full_text),
         "merchant_name": _parse_merchant(full_text),
+        "description": _parse_description(full_text),
         "raw_text": full_text[:500],
         "source": "slip",
     }

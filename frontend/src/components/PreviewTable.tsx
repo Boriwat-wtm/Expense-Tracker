@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, CheckCircle, AlertCircle, ChevronDown, ChevronUp, SkipForward } from "lucide-react";
 import type { PreviewItem, TransactionType } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 
@@ -23,10 +23,30 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
     onChange(updated);
   };
 
+  const toggleSkip = (idx: number) => {
+    const updated = items.map((item, i) =>
+      i === idx ? { ...item, skip: !item.skip } : item
+    );
+    onChange(updated);
+  };
+
   const hasErrors = items.some((i) => i.error);
+  const dupCount = items.filter((i) => i.is_duplicate).length;
+  const toSaveCount = items.filter((i) => !i.error && !i.skip && i.date && i.amount).length;
 
   return (
     <div className="space-y-4">
+      {/* Duplicate warning banner */}
+      {dupCount > 0 && (
+        <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-sm">
+          <span className="text-xl leading-none">🔁</span>
+          <div>
+            <p className="font-semibold text-yellow-800">พบ {dupCount} รายการที่ซ้ำกับข้อมูลในระบบ</p>
+            <p className="text-yellow-700 mt-0.5">รายการสีเหลืองถูกข้ามไว้โดยอัตโนมัติ — กดไอคอน <SkipForward size={13} className="inline" /> เพื่อเปิด/ปิดการข้าม</p>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -98,9 +118,22 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
                 </tr>
               ) : (
                 <>
-                <tr key={idx} className="hover:bg-gray-50">
+                <tr key={idx} className={`${
+                  item.is_duplicate
+                    ? item.skip
+                      ? "bg-yellow-50 opacity-60"
+                      : "bg-yellow-50"
+                    : "hover:bg-gray-50"
+                }`}>
                   <td className="px-4 py-3 text-gray-500 text-xs max-w-[120px] truncate">
-                    {item.filename ?? "-"}
+                    <div className="flex items-center gap-1.5">
+                      {item.is_duplicate && (
+                        <span className="shrink-0 text-xs font-bold bg-yellow-300 text-yellow-900 px-1.5 py-0.5 rounded">
+                          {item.skip ? "⛔ ข้าม" : "🔁 ซ้ำ"}
+                        </span>
+                      )}
+                      <span className="truncate">{item.filename ?? "-"}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-gray-700">{item.date ?? "-"}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">
@@ -128,6 +161,17 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
                     >
                       <Pencil size={16} />
                     </button>
+                    {item.is_duplicate && (
+                      <button
+                        onClick={() => toggleSkip(idx)}
+                        title={item.skip ? "เปิดใช้ (บันทึกรายการนี้)" : "ข้าม (ไม่บันทึกรายการนี้)"}
+                        className={`transition-colors ${
+                          item.skip ? "text-yellow-500 hover:text-green-600" : "text-yellow-600 hover:text-yellow-800"
+                        }`}
+                      >
+                        <SkipForward size={16} />
+                      </button>
+                    )}
                     <button
                       onClick={() => toggleDebug(idx)}
                       title="ดู raw text จาก OCR"
@@ -173,10 +217,16 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
       {!hasErrors && items.length > 0 && (
         <button
           onClick={onConfirm}
-          disabled={loading}
+          disabled={loading || toSaveCount === 0}
           className="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors disabled:opacity-60"
         >
-          {loading ? "กำลังบันทึก..." : `✅ บันทึกทั้งหมด (${items.length} รายการ)`}
+          {loading
+            ? "กำลังตรวจสอบ..."
+            : toSaveCount === 0
+            ? "ไม่มีรายการที่จะบันทึก"
+            : `✅ บันทึก ${toSaveCount} รายการ${
+                dupCount > 0 ? ` (ข้าม ${items.filter((i) => i.skip).length} รายการซ้ำ)` : ""
+              }`}
         </button>
       )}
     </div>

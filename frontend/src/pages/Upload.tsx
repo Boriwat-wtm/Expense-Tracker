@@ -27,14 +27,40 @@ export default function Upload() {
   // ── Helpers ────────────────────────────────────────────────────────────────
   const toCreate = (items: PreviewItem[]): TransactionCreate[] =>
     items
-      .filter((i) => !i.error && i.date && i.amount)
+      .filter((i) => !i.error && !i.skip && i.date && i.amount)
       .map((i) => ({
         date: i.date!,
         amount: i.amount!,
         description: i.description ?? "",
+        merchant_name: i.merchant_name ?? undefined,
+        transaction_time: i.transaction_time ?? undefined,
         type: i.type ?? "expense",
         source: i.source as TransactionSource,
       }));
+
+  /** Call check-duplicates, mark items, return true if any dupes found */
+  const checkDuplicates = async (
+    items: PreviewItem[],
+    setter: React.Dispatch<React.SetStateAction<PreviewItem[]>>,
+  ): Promise<boolean> => {
+    const validItems = items.filter((i) => !i.error && i.date && i.amount);
+    if (validItems.length === 0) return false;
+    const { data } = await api.post<{ is_duplicate: boolean }[]>(
+      "/upload/check-duplicates",
+      { transactions: toCreate(items) },
+    );
+    // map results back onto items (only valid items get a result)
+    let resultIdx = 0;
+    let anyDupe = false;
+    const marked = items.map((item) => {
+      if (item.error || !item.date || !item.amount) return item;
+      const res = data[resultIdx++];
+      if (res.is_duplicate) anyDupe = true;
+      return { ...item, is_duplicate: res.is_duplicate, skip: res.is_duplicate ? true : item.skip };
+    });
+    if (anyDupe) setter(marked);
+    return anyDupe;
+  };
 
   // ── Slip handlers ──────────────────────────────────────────────────────────
   const handleSlipDrop = async (files: File[]) => {
@@ -56,9 +82,19 @@ export default function Upload() {
 
   const handleSlipConfirm = async () => {
     setSlipLoading(true);
+    setSlipError("");
     try {
-      await api.post("/upload/confirm", { transactions: toCreate(slipPreviews) });
-      setSlipSuccess(`บันทึก ${slipPreviews.filter((i) => !i.error).length} รายการเรียบร้อย!`);
+      // Step 1: check for duplicates
+      const hasDupes = await checkDuplicates(slipPreviews, setSlipPreviews);
+      if (hasDupes) {
+        setSlipError("🔁 พบรายการซ้ำในระบบ — รายการที่เป็นสีเหลืองถูกสั่งไปก่อนแล้ว คุณสามารถเปิดใช้บันทึกหรือกดปุ่มอาะเพื่อบันทึกเฉพาะรายการใหม่");
+        setSlipLoading(false);
+        return;
+      }
+      // Step 2: save
+      const toSave = toCreate(slipPreviews);
+      await api.post("/upload/confirm", { transactions: toSave });
+      setSlipSuccess(`บันทึก ${toSave.length} รายการเรียบร้อย!`);
       setSlipPreviews([]);
     } catch {
       setSlipError("บันทึกไม่สำเร็จ");
@@ -95,9 +131,17 @@ export default function Upload() {
 
   const handlePdfConfirm = async () => {
     setPdfLoading(true);
+    setPdfError("");
     try {
-      await api.post("/upload/confirm", { transactions: toCreate(pdfPreviews) });
-      setPdfSuccess(`บันทึก ${pdfPreviews.filter((i) => !i.error).length} รายการเรียบร้อย!`);
+      const hasDupes = await checkDuplicates(pdfPreviews, setPdfPreviews);
+      if (hasDupes) {
+        setPdfError("🔁 พบรายการซ้ำในระบบ — รายการที่เป็นสีเหลืองถูกสั่งไปก่อนแล้ว คุณสามารถเปิดใช้บันทึกหรือกดปุ่มอาะเพื่อบันทึกเฉพาะรายการใหม่");
+        setPdfLoading(false);
+        return;
+      }
+      const toSave = toCreate(pdfPreviews);
+      await api.post("/upload/confirm", { transactions: toSave });
+      setPdfSuccess(`บันทึก ${toSave.length} รายการเรียบร้อย!`);
       setPdfPreviews([]);
       setPdfFile(null);
       setPdfPassword("");

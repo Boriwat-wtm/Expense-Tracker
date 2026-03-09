@@ -174,6 +174,25 @@ async def upload_pdf(
     return {"previews": serialisable}
 
 
+@router.post("/check-duplicates")
+def check_duplicates(
+    data: BulkConfirm,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[dict[str, Any]]:
+    """Pre-flight check: returns per-item duplicate status without saving."""
+    results: list[dict[str, Any]] = []
+    for txn_data in data.transactions:
+        dup = _find_duplicate(db, current_user.id, txn_data)
+        results.append({
+            "is_duplicate": dup is not None,
+            "existing_date": dup.date.isoformat() if dup else None,
+            "existing_amount": str(dup.amount) if dup else None,
+            "existing_description": dup.description if dup else None,
+        })
+    return results
+
+
 @router.post("/confirm", response_model=List[TransactionOut], status_code=201)
 def confirm_transactions(
     data: BulkConfirm,

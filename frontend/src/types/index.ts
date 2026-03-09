@@ -111,4 +111,6 @@ export interface PreviewItem {
   source: TransactionSource;
   error?: string;
   raw_text?: string;
+  is_duplicate?: boolean;  // set after check-duplicates
+  skip?: boolean;          // user chose to skip this item
 }
