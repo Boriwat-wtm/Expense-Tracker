@@ -31,7 +31,8 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
   };
 
   const hasErrors = items.some((i) => i.error);
-  const dupCount = items.filter((i) => i.is_duplicate).length;
+  const dupCount = items.filter((i) => i.is_duplicate && !i.can_merge).length;
+  const mergeCount = items.filter((i) => i.can_merge).length;
   const toSaveCount = items.filter((i) => !i.error && !i.skip && i.date && i.amount).length;
 
   return (
@@ -43,6 +44,16 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
           <div>
             <p className="font-semibold text-yellow-800">พบ {dupCount} รายการที่ซ้ำกับข้อมูลในระบบ</p>
             <p className="text-yellow-700 mt-0.5">รายการสีเหลืองถูกข้ามไว้โดยอัตโนมัติ — กดไอคอน <SkipForward size={13} className="inline" /> เพื่อเปิด/ปิดการข้าม</p>
+          </div>
+        </div>
+      )}
+      {/* Merge info banner */}
+      {mergeCount > 0 && (
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm">
+          <span className="text-xl leading-none">🔀</span>
+          <div>
+            <p className="font-semibold text-blue-800">พบ {mergeCount} รายการที่จะ merge กับข้อมูลในระบบ</p>
+            <p className="text-blue-700 mt-0.5">รายการสีน้ำเงินมี memo/ข้อมูลใหม่ — จะถูกนำไปเพิ่มเติมในรายการเดิมอัตโนมัติ</p>
           </div>
         </div>
       )}
@@ -119,7 +130,9 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
               ) : (
                 <>
                 <tr key={idx} className={`${
-                  item.is_duplicate
+                  item.can_merge
+                    ? "bg-blue-50"
+                    : item.is_duplicate
                     ? item.skip
                       ? "bg-yellow-50 opacity-60"
                       : "bg-yellow-50"
@@ -127,7 +140,12 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
                 }`}>
                   <td className="px-4 py-3 text-gray-500 text-xs max-w-[120px] truncate">
                     <div className="flex items-center gap-1.5">
-                      {item.is_duplicate && (
+                      {item.can_merge && (
+                        <span className="shrink-0 text-xs font-bold bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded">
+                          🔀 merge
+                        </span>
+                      )}
+                      {item.is_duplicate && !item.can_merge && (
                         <span className="shrink-0 text-xs font-bold bg-yellow-300 text-yellow-900 px-1.5 py-0.5 rounded">
                           {item.skip ? "⛔ ข้าม" : "🔁 ซ้ำ"}
                         </span>
@@ -161,7 +179,7 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
                     >
                       <Pencil size={16} />
                     </button>
-                    {item.is_duplicate && (
+                    {item.is_duplicate && !item.can_merge && (
                       <button
                         onClick={() => toggleSkip(idx)}
                         title={item.skip ? "เปิดใช้ (บันทึกรายการนี้)" : "ข้าม (ไม่บันทึกรายการนี้)"}
@@ -226,7 +244,7 @@ export default function PreviewTable({ items, onChange, onConfirm, loading }: Pr
             ? "ไม่มีรายการที่จะบันทึก"
             : `✅ บันทึก ${toSaveCount} รายการ${
                 dupCount > 0 ? ` (ข้าม ${items.filter((i) => i.skip).length} รายการซ้ำ)` : ""
-              }`}
+              }${mergeCount > 0 ? ` (merge ${mergeCount} รายการ)` : ""}`}
         </button>
       )}
     </div>

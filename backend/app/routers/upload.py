@@ -184,8 +184,17 @@ def check_duplicates(
     results: list[dict[str, Any]] = []
     for txn_data in data.transactions:
         dup = _find_duplicate(db, current_user.id, txn_data)
+        # can_merge = duplicate exists but incoming data can enrich the existing record
+        can_merge = False
+        if dup is not None:
+            can_merge = bool(
+                (txn_data.description and not dup.description)
+                or (txn_data.merchant_name and not dup.merchant_name)
+                or (txn_data.transaction_time and not dup.transaction_time)
+            )
         results.append({
             "is_duplicate": dup is not None,
+            "can_merge": can_merge,
             "existing_date": dup.date.isoformat() if dup else None,
             "existing_amount": str(dup.amount) if dup else None,
             "existing_description": dup.description if dup else None,
@@ -208,7 +217,10 @@ def confirm_transactions(
                 dup.merchant_name = txn_data.merchant_name
             if txn_data.transaction_time and not dup.transaction_time:
                 dup.transaction_time = txn_data.transaction_time
-            if txn_data.description and not dup.description:
+            # description/memo: slip's memo always wins (statements never have memo)
+            if txn_data.source == TransactionSource.slip and txn_data.description:
+                dup.description = txn_data.description
+            elif txn_data.description and not dup.description:
                 dup.description = txn_data.description
             if txn_data.category and not dup.category:
                 dup.category = txn_data.category

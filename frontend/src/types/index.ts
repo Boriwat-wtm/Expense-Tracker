@@ -112,5 +112,6 @@ export interface PreviewItem {
   error?: string;
   raw_text?: string;
   is_duplicate?: boolean;  // set after check-duplicates
+  can_merge?: boolean;     // duplicate but has new data (memo/merchant) to enrich existing record
   skip?: boolean;          // user chose to skip this item
 }

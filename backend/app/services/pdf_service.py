@@ -27,7 +27,7 @@ _CREDIT_RE = re.compile(
     r"โอนเข้า|รับโอน|ฝาก|เงินเข้า|credit|CR\b|deposit", re.IGNORECASE
 )
 _DEBIT_RE = re.compile(
-    r"โอนออก|ถอน|ชำระ|เงินออก|debit|DR\b|withdraw|payment", re.IGNORECASE
+    r"โอนออก|ถอน|ชำระ|เงินออก|จ่าย|debit|DR\b|withdraw|payment", re.IGNORECASE
 )
 
 
@@ -72,6 +72,28 @@ def _parse_amount(text: str) -> Optional[Decimal]:
         except InvalidOperation:
             continue
     return max(amounts) if amounts else None
+
+
+def _parse_txn_amount(text: str) -> Optional[Decimal]:
+    """
+    For line-based (text fallback) parsing.
+    Prefer amounts WITHOUT thousands comma separator — those are transaction
+    amounts (e.g. '90.00').  Amounts with commas (e.g. '10,095.65') are
+    typically running balances and are used only as a last resort.
+    """
+    plain: list[Decimal] = []
+    all_amounts: list[Decimal] = []
+    for m in _AMOUNT_RE.finditer(text):
+        raw_str = m.group(1)
+        try:
+            val = Decimal(raw_str.replace(",", ""))
+            if val > 0:
+                all_amounts.append(val)
+                if "," not in raw_str:
+                    plain.append(val)
+        except InvalidOperation:
+            continue
+    return max(plain) if plain else (max(all_amounts) if all_amounts else None)
 
 
 def _detect_type(row_text: str) -> str:
@@ -212,6 +234,8 @@ def _parse_table_with_headers(table: list[list[Any]]) -> list[dict[str, Any]]:
         elif txn_type_col is None and any(k in h for k in profile["txn_type"]):
             txn_type_col = i
 
+    last_date: Optional[date] = None  # carry forward for merged/empty date cells
+
     results: list[dict[str, Any]] = []
     for row in table[1:]:
         if not row:
@@ -225,7 +249,11 @@ def _parse_table_with_headers(table: list[list[Any]]) -> list[dict[str, Any]]:
                 txn_date = _parse_date(str(cell or ""))
                 if txn_date:
                     break
-        if not txn_date:
+        if txn_date:
+            last_date = txn_date          # update carryover
+        elif last_date:
+            txn_date = last_date          # use last known date (merged cell)
+        else:
             continue
 
         # ── Amount & type ─────────────────────────────────────────────────────
@@ -233,16 +261,30 @@ def _parse_table_with_headers(table: list[list[Any]]) -> list[dict[str, Any]]:
         txn_type = "expense"
 
         if debit_col is not None and credit_col is not None:
+            # Separate debit / credit columns
             debit_val = _parse_amount(str(row[debit_col] or ""))
             credit_val = _parse_amount(str(row[credit_col] or ""))
             if credit_val and credit_val > 0:
                 amount, txn_type = credit_val, "income"
             elif debit_val and debit_val > 0:
                 amount, txn_type = debit_val, "expense"
+        elif debit_col is not None:
+            # Single combined column (e.g. "ถอนเงิน / ฝากเงิน")
+            amount = _parse_amount(str(row[debit_col] or ""))
+            type_text = str(row[txn_type_col] or "") if txn_type_col is not None else ""
+            if not type_text:
+                type_text = " ".join(str(c) for c in row if c)
+            txn_type = _detect_type(type_text)
+        elif credit_col is not None:
+            # Only credit column found
+            amount = _parse_amount(str(row[credit_col] or ""))
+            txn_type = "income"
         else:
+            # No dedicated amount column: scan real-value cells only
+            _skip = {c for c in [date_col, time_col, balance_col] if c is not None}
             candidates: list[Decimal] = []
             for i, cell in enumerate(row):
-                if i == balance_col:
+                if i in _skip:
                     continue
                 v = _parse_amount(str(cell or ""))
                 if v and v > 0:
@@ -308,7 +350,7 @@ def extract_from_pdf(file_bytes: bytes, password: str = "") -> list[dict[str, An
                         if len(line) < 5:
                             continue
                         txn_date = _parse_date(line)
-                        amount = _parse_amount(line)
+                        amount = _parse_txn_amount(line)
                         if txn_date and amount:
                             desc_text = re.sub(r"\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}", "", line)
                             desc_text = re.sub(_AMOUNT_RE, "", desc_text)

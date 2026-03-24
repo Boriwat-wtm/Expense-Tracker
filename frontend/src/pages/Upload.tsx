@@ -38,28 +38,45 @@ export default function Upload() {
         source: i.source as TransactionSource,
       }));
 
-  /** Call check-duplicates, mark items, return true if any dupes found */
+  /**
+   * Check for duplicates and mark items accordingly.
+   * - true duplicate (can_merge=false) → skip=true (yellow, user can un-skip)
+   * - mergeable (can_merge=true)       → skip=false, will be sent to confirm so backend merges memo
+   * Returns { hasTrueDupes, mergeCount, markedItems }
+   */
   const checkDuplicates = async (
     items: PreviewItem[],
     setter: React.Dispatch<React.SetStateAction<PreviewItem[]>>,
-  ): Promise<boolean> => {
+  ): Promise<{ hasTrueDupes: boolean; mergeCount: number; markedItems: PreviewItem[] }> => {
     const validItems = items.filter((i) => !i.error && i.date && i.amount);
-    if (validItems.length === 0) return false;
-    const { data } = await api.post<{ is_duplicate: boolean }[]>(
+    if (validItems.length === 0) return { hasTrueDupes: false, mergeCount: 0, markedItems: items };
+    const { data } = await api.post<{ is_duplicate: boolean; can_merge: boolean }[]>(
       "/upload/check-duplicates",
       { transactions: toCreate(items) },
     );
-    // map results back onto items (only valid items get a result)
     let resultIdx = 0;
-    let anyDupe = false;
+    let hasTrueDupes = false;
+    let mergeCount = 0;
     const marked = items.map((item) => {
       if (item.error || !item.date || !item.amount) return item;
       const res = data[resultIdx++];
-      if (res.is_duplicate) anyDupe = true;
-      return { ...item, is_duplicate: res.is_duplicate, skip: res.is_duplicate ? true : item.skip };
+      if (res.is_duplicate) {
+        if (res.can_merge) {
+          mergeCount++; // has new data (memo/merchant) to add — let it through to confirm
+        } else {
+          hasTrueDupes = true; // exact duplicate, nothing new to add
+        }
+      }
+      return {
+        ...item,
+        is_duplicate: res.is_duplicate,
+        can_merge: res.can_merge,
+        // only skip true duplicates; mergeable items pass through so backend merges memo
+        skip: res.is_duplicate && !res.can_merge ? true : item.skip,
+      };
     });
-    if (anyDupe) setter(marked);
-    return anyDupe;
+    if (hasTrueDupes || mergeCount > 0) setter(marked);
+    return { hasTrueDupes, mergeCount, markedItems: marked };
   };
 
   // ── Slip handlers ──────────────────────────────────────────────────────────
@@ -83,18 +100,21 @@ export default function Upload() {
   const handleSlipConfirm = async () => {
     setSlipLoading(true);
     setSlipError("");
+    setSlipSuccess("");
     try {
       // Step 1: check for duplicates
-      const hasDupes = await checkDuplicates(slipPreviews, setSlipPreviews);
-      if (hasDupes) {
-        setSlipError("🔁 พบรายการซ้ำในระบบ — รายการที่เป็นสีเหลืองถูกสั่งไปก่อนแล้ว คุณสามารถเปิดใช้บันทึกหรือกดปุ่มอาะเพื่อบันทึกเฉพาะรายการใหม่");
+      const { hasTrueDupes, mergeCount, markedItems } = await checkDuplicates(slipPreviews, setSlipPreviews);
+      if (hasTrueDupes) {
+        setSlipError("🔁 พบรายการซ้ำในระบบ — รายการที่เป็นสีเหลืองถูกสั่งไปก่อนแล้ว คุณสามารถเปิดใช้บันทึกหรือกดปุ่มเพื่อบันทึกเฉพาะรายการใหม่");
         setSlipLoading(false);
         return;
       }
-      // Step 2: save
-      const toSave = toCreate(slipPreviews);
+      // Step 2: save (mergeable items go through so backend adds memo to existing records)
+      const toSave = toCreate(markedItems);
+      if (toSave.length === 0) { setSlipLoading(false); return; }
       await api.post("/upload/confirm", { transactions: toSave });
-      setSlipSuccess(`บันทึก ${toSave.length} รายการเรียบร้อย!`);
+      const mergeMsg = mergeCount > 0 ? ` (เพิ่ม memo ลงในรายการเดิม ${mergeCount} รายการ)` : "";
+      setSlipSuccess(`บันทึก ${toSave.length} รายการเรียบร้อย!${mergeMsg}`);
       setSlipPreviews([]);
     } catch {
       setSlipError("บันทึกไม่สำเร็จ");
@@ -132,16 +152,19 @@ export default function Upload() {
   const handlePdfConfirm = async () => {
     setPdfLoading(true);
     setPdfError("");
+    setPdfSuccess("");
     try {
-      const hasDupes = await checkDuplicates(pdfPreviews, setPdfPreviews);
-      if (hasDupes) {
-        setPdfError("🔁 พบรายการซ้ำในระบบ — รายการที่เป็นสีเหลืองถูกสั่งไปก่อนแล้ว คุณสามารถเปิดใช้บันทึกหรือกดปุ่มอาะเพื่อบันทึกเฉพาะรายการใหม่");
+      const { hasTrueDupes, mergeCount, markedItems } = await checkDuplicates(pdfPreviews, setPdfPreviews);
+      if (hasTrueDupes) {
+        setPdfError("🔁 พบรายการซ้ำในระบบ — รายการที่เป็นสีเหลืองถูกสั่งไปก่อนแล้ว คุณสามารถเปิดใช้บันทึกหรือกดปุ่มเพื่อบันทึกเฉพาะรายการใหม่");
         setPdfLoading(false);
         return;
       }
-      const toSave = toCreate(pdfPreviews);
+      const toSave = toCreate(markedItems);
+      if (toSave.length === 0) { setPdfLoading(false); return; }
       await api.post("/upload/confirm", { transactions: toSave });
-      setPdfSuccess(`บันทึก ${toSave.length} รายการเรียบร้อย!`);
+      const mergeMsg = mergeCount > 0 ? ` (เพิ่ม memo ลงในรายการเดิม ${mergeCount} รายการ)` : "";
+      setPdfSuccess(`บันทึก ${toSave.length} รายการเรียบร้อย!${mergeMsg}`);
       setPdfPreviews([]);
       setPdfFile(null);
       setPdfPassword("");
